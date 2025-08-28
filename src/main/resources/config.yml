@@ -1,0 +1,37 @@
+storage:
+  type: sqlite      # sqlite | yaml
+
+cooldowns:
+  report: 30        # seconds between reports
+
+notifications:
+  on_staff_join: true
+  unread_count: true
+
+discord:
+  enabled: false             # requires DiscordSRV
+  channel_id: ""   # target channel
+  ping_role_id: ""          # optional role to @mention (empty to disable)
+  message: "**New report #{id}** by {displayReporter} [{category}] at {world} {x} {y} {z}\n{message}"
+
+rules:
+  file: "rules.txt"         # located in plugins/PiCraftPlugin/
+  pagination:
+    enabled: false
+    lines_per_page: 12
+
+messages:
+  prefix: "&6[PiCraft]&r "
+  report_submitted: "&aYour report has been submitted. Staff will review it soon."
+  report_submitted_anon: "&aYour anonymous report has been submitted."
+  report_cooldown: "&cYou must wait {time}s before submitting another report."
+  staff_notify: "&eThere are &6{count}&e new reports. Use &6/reports&e."
+  no_permission: "&cYou do not have permission."
+  not_found: "&cReport not found."
+  viewed: "&aMarked report #{id} as read."
+  cleared: "&aClosed report #{id}."
+  assigned: "&aAssigned report #{id} to {staff}."
+  notify_on: "&aReport notifications: &2ON"
+  notify_off: "&aReport notifications: &cOFF"
+  teleported: "&aTeleported to report #{id} location."
+  rules_not_found: "&cRules file not found. Please contact an administrator."

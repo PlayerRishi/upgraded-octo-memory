@@ -1,0 +1,127 @@
+name: PiCraftPlugin
+version: '${version}'
+main: org.pluginmakers.piCraftPlugin.PiCraftPlugin
+api-version: '1.21'
+authors: [ PlayerRishi ]
+description: A lightweight Paper/Spigot plugin for PiCraft Season 2 with player reports, staff tools, and rules system
+website: https://github.com/PlayerRishi/PiCraftPlugin
+
+softdepend: [DiscordSRV, LuckPerms, CoreProtect]
+
+commands:
+  report:
+    description: Report a player or issue to staff
+    usage: /report [-anon] [category] <message>
+    permission: picraft.report.use
+  
+  reports:
+    description: View unread and open reports (staff)
+    usage: /reports [page]
+    permission: picraft.report.view
+  
+  reportlist:
+    description: View all reports with filters (staff)
+    usage: /reportlist [all|open|closed|unread] [page]
+    permission: picraft.report.list
+  
+  reportview:
+    description: View detailed report information
+    usage: /reportview <id>
+    permission: picraft.report.view
+  
+  reportread:
+    description: Mark a report as read
+    usage: /reportread <id>
+    permission: picraft.report.read
+  
+  reportclear:
+    description: Close a report
+    usage: /reportclear <id>
+    aliases: [reportclose]
+    permission: picraft.report.clear
+  
+  reportassign:
+    description: Assign a report to staff member
+    usage: /reportassign <id> <staff>
+    permission: picraft.report.assign
+  
+  reportnotify:
+    description: Toggle report notifications
+    usage: /reportnotify [on|off|toggle]
+    permission: picraft.report.notify
+  
+  reporttp:
+    description: Teleport to report location
+    usage: /reporttp <id>
+    permission: picraft.report.tp
+  
+  rules:
+    description: Display server rules
+    usage: /rules [page]
+    permission: picraft.rules
+
+permissions:
+  picraft.rules:
+    description: Use /rules command
+    default: true
+  
+  picraft.report.use:
+    description: File reports
+    default: true
+  
+  picraft.report.use.anon:
+    description: Allow anonymous reports
+    default: true
+  
+  picraft.report.cooldown.bypass:
+    description: Bypass report cooldown
+    default: op
+  
+  picraft.report.view:
+    description: View reports (staff)
+    default: op
+  
+  picraft.report.list:
+    description: List all reports with filters
+    default: op
+  
+  picraft.report.read:
+    description: Mark reports as read
+    default: op
+  
+  picraft.report.clear:
+    description: Close reports
+    default: op
+  
+  picraft.report.assign:
+    description: Assign reports to staff
+    default: op
+  
+  picraft.report.notify:
+    description: Toggle report notifications
+    default: op
+  
+  picraft.report.tp:
+    description: Teleport to report locations
+    default: op
+  
+  picraft.report.view.realname:
+    description: View real reporter behind anonymous reports
+    default: op
+  
+  picraft.*:
+    description: All PiCraft permissions
+    default: op
+    children:
+      picraft.rules: true
+      picraft.report.use: true
+      picraft.report.use.anon: true
+      picraft.report.cooldown.bypass: true
+      picraft.report.view: true
+      picraft.report.list: true
+      picraft.report.read: true
+      picraft.report.clear: true
+      picraft.report.assign: true
+      picraft.report.notify: true
+      picraft.report.tp: true
+      picraft.report.view.realname: true
