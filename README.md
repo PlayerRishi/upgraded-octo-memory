@@ -1,8 +1,6 @@
 # 🌐 PiCraft Plugin
 
-A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a clean player report system, simple staff tools, and a /rules command that reads from a separate rules.txt file. Plays nice with LuckPerms, CoreProtect, and DiscordSRV.
-
-**Vibe: Vanilla-first. Tools when you need 'em. No nonsense.**
+A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a clean player report system, simple staff tools, and a /rules command that reads from a separate rules.txt file. Works nicely with LuckPerms, CoreProtect, and DiscordSRV.
 
 ## ✨ Features
 
