@@ -1,13 +1,20 @@
 package org.pluginmakers.piCraftPlugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.pluginmakers.piCraftPlugin.commands.EvidenceCommand;
 import org.pluginmakers.piCraftPlugin.commands.ReportCommand;
+import org.pluginmakers.piCraftPlugin.commands.ReportTabCompleter;
 import org.pluginmakers.piCraftPlugin.commands.RulesCommand;
 import org.pluginmakers.piCraftPlugin.commands.StaffCommands;
 import org.pluginmakers.piCraftPlugin.config.ConfigManager;
 import org.pluginmakers.piCraftPlugin.database.DatabaseManager;
+import org.pluginmakers.piCraftPlugin.detection.BaseRadiusEnforcer;
+import org.pluginmakers.piCraftPlugin.detection.CombatLogDetector;
+import org.pluginmakers.piCraftPlugin.detection.SeedAbuseDetector;
 import org.pluginmakers.piCraftPlugin.listeners.PlayerJoinListener;
+import org.pluginmakers.piCraftPlugin.managers.BaseTracker;
 import org.pluginmakers.piCraftPlugin.managers.ReportManager;
+import org.pluginmakers.piCraftPlugin.web.WebDashboard;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +25,8 @@ public final class PiCraftPlugin extends JavaPlugin {
     private ConfigManager configManager;
     private DatabaseManager databaseManager;
     private ReportManager reportManager;
+    private BaseTracker baseTracker;
+    private WebDashboard webDashboard;
     
     @Override
     public void onEnable() {
@@ -36,6 +45,8 @@ public final class PiCraftPlugin extends JavaPlugin {
         
         // Initialize managers
         reportManager = new ReportManager(this);
+        baseTracker = new BaseTracker(this);
+        webDashboard = new WebDashboard(this);
         
         // Register commands
         registerCommands();
@@ -43,14 +54,31 @@ public final class PiCraftPlugin extends JavaPlugin {
         // Register listeners
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         
+        // Register detection systems
+        if (configManager.getConfig().getBoolean("reports.auto_detection.combat_logging.enabled", true)) {
+            getServer().getPluginManager().registerEvents(new CombatLogDetector(this), this);
+        }
+        if (configManager.getConfig().getBoolean("reports.auto_detection.seed_abuse.enabled", true)) {
+            getServer().getPluginManager().registerEvents(new SeedAbuseDetector(this), this);
+        }
+        if (configManager.getConfig().getBoolean("reports.base_tracking.enforce_radius", true)) {
+            getServer().getPluginManager().registerEvents(new BaseRadiusEnforcer(this), this);
+        }
+        
         // Create default rules file if it doesn't exist
         createDefaultRulesFile();
+        
+        // Start web dashboard
+        webDashboard.start();
         
         getLogger().info("PiCraft Plugin has been enabled!");
     }
     
     @Override
     public void onDisable() {
+        if (webDashboard != null) {
+            webDashboard.stop();
+        }
         if (databaseManager != null) {
             databaseManager.close();
         }
@@ -60,6 +88,7 @@ public final class PiCraftPlugin extends JavaPlugin {
     private void registerCommands() {
         // Player commands
         getCommand("report").setExecutor(new ReportCommand(this));
+        getCommand("report").setTabCompleter(new ReportTabCompleter(this));
         getCommand("rules").setExecutor(new RulesCommand(this));
         
         // Staff commands
@@ -72,6 +101,7 @@ public final class PiCraftPlugin extends JavaPlugin {
         getCommand("reportassign").setExecutor(staffCommands);
         getCommand("reportnotify").setExecutor(staffCommands);
         getCommand("reporttp").setExecutor(staffCommands);
+        getCommand("evidence").setExecutor(new EvidenceCommand(this));
     }
     
     private void createDefaultRulesFile() {
@@ -141,5 +171,9 @@ public final class PiCraftPlugin extends JavaPlugin {
     
     public ReportManager getReportManager() {
         return reportManager;
+    }
+    
+    public BaseTracker getBaseTracker() {
+        return baseTracker;
     }
 }

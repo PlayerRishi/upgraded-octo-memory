@@ -3,6 +3,7 @@ package org.pluginmakers.piCraftPlugin.listeners;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.jetbrains.annotations.NotNull;
 import org.pluginmakers.piCraftPlugin.PiCraftPlugin;
 
 public class PlayerJoinListener implements Listener {
@@ -13,7 +14,7 @@ public class PlayerJoinListener implements Listener {
     }
     
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
+    public void onPlayerJoin(@NotNull PlayerJoinEvent event) {
         // Delay the notification slightly to ensure the player is fully loaded
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
             plugin.getReportManager().notifyStaffJoin(event.getPlayer());

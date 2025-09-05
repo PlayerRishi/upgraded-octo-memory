@@ -1,10 +1,11 @@
 package org.pluginmakers.piCraftPlugin.managers;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.pluginmakers.piCraftPlugin.PiCraftPlugin;
 import org.pluginmakers.piCraftPlugin.model.Report;
+import org.pluginmakers.piCraftPlugin.utils.ColorUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +29,8 @@ public class ReportManager {
         }
     }
     
-    private void notifyOnlineStaff(Report report) {
-        String message = ChatColor.translateAlternateColorCodes('&', 
+    private void notifyOnlineStaff(@NotNull Report report) {
+        String message = ColorUtil.colorizeToString(
             plugin.getConfigManager().getPrefix() + 
             "&eNew report #" + report.getId() + " from " + 
             report.getDisplayReporter(false) + ". Use &6/reports&e to view.");
@@ -37,13 +38,20 @@ public class ReportManager {
         for (Player player : Bukkit.getOnlinePlayers()) {
             if (player.hasPermission("picraft.report.view") && 
                 isNotificationEnabled(player.getUniqueId())) {
-                player.sendMessage(message);
+                player.sendMessage(ColorUtil.colorize(message));
             }
         }
     }
     
     private void sendDiscordNotification(Report report) {
         if (!Bukkit.getPluginManager().isPluginEnabled("DiscordSRV")) {
+            plugin.getLogger().info("DiscordSRV not found, skipping Discord notification");
+            return;
+        }
+        
+        String channelId = plugin.getConfigManager().getDiscordChannelId();
+        if (channelId.isEmpty()) {
+            plugin.getLogger().warning("Discord channel ID not configured");
             return;
         }
         
@@ -53,24 +61,32 @@ public class ReportManager {
             Object discordSRV = discordSRVClass.getMethod("getPlugin").invoke(null);
             Object jda = discordSRVClass.getMethod("getJda").invoke(discordSRV);
             
-            if (jda != null) {
-                String channelId = plugin.getConfigManager().getDiscordChannelId();
-                if (!channelId.isEmpty()) {
-                    String message = formatDiscordMessage(report);
-                    
-                    // Send message to Discord channel
-                    Class<?> jdaClass = jda.getClass();
-                    Object textChannel = jdaClass.getMethod("getTextChannelById", String.class)
-                        .invoke(jda, channelId);
-                    
-                    if (textChannel != null) {
-                        textChannel.getClass().getMethod("sendMessage", String.class)
-                            .invoke(textChannel, message);
-                    }
-                }
+            if (jda == null) {
+                plugin.getLogger().warning("DiscordSRV JDA is null - bot may not be connected");
+                return;
             }
+            
+            String message = formatDiscordMessage(report);
+            
+            // Send message to Discord channel
+            Class<?> jdaClass = jda.getClass();
+            Object textChannel = jdaClass.getMethod("getTextChannelById", String.class)
+                .invoke(jda, channelId);
+            
+            if (textChannel == null) {
+                plugin.getLogger().warning("Discord channel not found: " + channelId + " - Check channel ID and bot permissions");
+                return;
+            }
+            
+            // Send the message
+            Object messageAction = textChannel.getClass().getMethod("sendMessage", String.class)
+                .invoke(textChannel, message);
+            
+            plugin.getLogger().info("Discord notification sent for report #" + report.getId());
+            
         } catch (Exception e) {
             plugin.getLogger().warning("Failed to send Discord notification: " + e.getMessage());
+            plugin.getLogger().warning("Check: 1) Bot token, 2) Channel ID, 3) Bot permissions in channel");
         }
     }
     
@@ -90,7 +106,7 @@ public class ReportManager {
             .replace("{time}", report.getCreatedAt().toString());
     }
     
-    public void notifyStaffJoin(Player player) {
+    public void notifyStaffJoin(@NotNull Player player) {
         if (!plugin.getConfigManager().isStaffJoinNotificationEnabled()) {
             return;
         }
@@ -109,7 +125,7 @@ public class ReportManager {
                 String message = plugin.getConfigManager().getMessage("staff_notify")
                     .replace("{count}", String.valueOf(unreadCount));
                 
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+                player.sendMessage(ColorUtil.colorize(
                     plugin.getConfigManager().getPrefix() + message));
             }
         } catch (Exception e) {

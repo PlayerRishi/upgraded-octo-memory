@@ -68,6 +68,24 @@ public class ConfigManager {
         return config.getInt("rules.pagination.lines_per_page", 12);
     }
     
+    // Report categories
+    public java.util.List<String> getReportCategories() {
+        return config.getStringList("reports.categories");
+    }
+    
+    // Base tracking settings
+    public boolean isBaseTrackingEnabled() {
+        return config.getBoolean("reports.base_tracking.enabled", true);
+    }
+    
+    public int getRadiusLimit() {
+        return config.getInt("reports.base_tracking.radius_limit", 2500);
+    }
+    
+    public boolean isCoordinateLoggingEnabled() {
+        return config.getBoolean("reports.base_tracking.log_coordinates", true);
+    }
+    
     // Messages
     public String getPrefix() {
         return config.getString("messages.prefix", "&6[PiCraft]&r ");
@@ -75,5 +93,25 @@ public class ConfigManager {
     
     public String getMessage(String key) {
         return config.getString("messages." + key, "Message not found: " + key);
+    }
+    
+    public org.bukkit.configuration.file.FileConfiguration getConfig() {
+        return config;
+    }
+    
+    public boolean isWebDashboardEnabled() {
+        return config.getBoolean("web_dashboard.enabled", false);
+    }
+    
+    public int getWebDashboardPort() {
+        return config.getInt("web_dashboard.port", 8080);
+    }
+    
+    public String getWebDashboardHost() {
+        return config.getString("web_dashboard.host", "localhost");
+    }
+    
+    public String getWebDashboardAuthKey() {
+        return config.getString("web_dashboard.auth_key", "change-me");
     }
 }

@@ -1,15 +1,16 @@
 package org.pluginmakers.piCraftPlugin.commands;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.pluginmakers.piCraftPlugin.PiCraftPlugin;
 import org.pluginmakers.piCraftPlugin.model.Report;
+import org.pluginmakers.piCraftPlugin.utils.ColorUtil;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -23,7 +24,7 @@ public class StaffCommands implements CommandExecutor {
     }
     
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         String cmd = command.getName().toLowerCase();
         
         switch (cmd) {
@@ -51,7 +52,7 @@ public class StaffCommands implements CommandExecutor {
     
     private boolean handleReports(CommandSender sender, String[] args) {
         if (!sender.hasPermission("picraft.report.view")) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
@@ -69,33 +70,32 @@ public class StaffCommands implements CommandExecutor {
             int offset = (page - 1) * REPORTS_PER_PAGE;
             List<Report> reports = plugin.getDatabaseManager().getUnreadReports(REPORTS_PER_PAGE, offset);
             
-            sender.sendMessage(ChatColor.GOLD + "=== Unread Reports (Page " + page + ") ===");
+            sender.sendMessage(ColorUtil.colorize("&6=== Unread Reports (Page " + page + ") ==="));
             
             if (reports.isEmpty()) {
-                sender.sendMessage(ChatColor.GREEN + "No unread reports!");
+                sender.sendMessage(ColorUtil.colorize("&aNo unread reports!"));
                 return true;
             }
             
             boolean canViewRealName = sender.hasPermission("picraft.report.view.realname");
             
             for (Report report : reports) {
-                String status = report.getStatus() == Report.Status.OPEN ? 
-                    ChatColor.RED + "OPEN" : ChatColor.YELLOW + "READ";
+                String status = report.getStatus() == Report.Status.OPEN ? "&cOPEN" : "&eREAD";
+                String category = report.getCategory() != null ? "[" + report.getCategory() + "] " : "";
+                String message = report.getMessage().length() > 50 ? 
+                    report.getMessage().substring(0, 50) + "..." : report.getMessage();
                 
-                sender.sendMessage(String.format("%s#%d %s[%s] %sby %s %s- %s", 
-                    ChatColor.YELLOW, report.getId(),
-                    status, ChatColor.WHITE,
-                    report.getCategory() != null ? "[" + report.getCategory() + "] " : "",
-                    report.getDisplayReporter(canViewRealName),
-                    ChatColor.GRAY,
-                    report.getMessage().length() > 50 ? 
-                        report.getMessage().substring(0, 50) + "..." : report.getMessage()));
+                String displayText = String.format("&e#%d %s &f%sby %s &7- %s", 
+                    report.getId(), status, category,
+                    report.getDisplayReporter(canViewRealName), message);
+                        
+                sender.sendMessage(ColorUtil.colorize(displayText));
             }
             
-            sender.sendMessage(ChatColor.GRAY + "Use /reportview <id> for details");
+            sender.sendMessage(ColorUtil.colorize("&7Use /reportview <id> for details"));
             
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Error loading reports.");
+            sender.sendMessage(ColorUtil.colorize("&cError loading reports."));
             e.printStackTrace();
         }
         
@@ -104,7 +104,7 @@ public class StaffCommands implements CommandExecutor {
     
     private boolean handleReportList(CommandSender sender, String[] args) {
         if (!sender.hasPermission("picraft.report.list")) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
@@ -134,7 +134,7 @@ public class StaffCommands implements CommandExecutor {
                     try {
                         page = Integer.parseInt(filterArg);
                     } catch (NumberFormatException e) {
-                        sender.sendMessage(ChatColor.RED + "Usage: /reportlist [all|open|closed|unread] [page]");
+                        sender.sendMessage(ColorUtil.colorize("&cUsage: /reportlist [all|open|closed|unread] [page]"));
                         return true;
                     }
             }
@@ -153,30 +153,30 @@ public class StaffCommands implements CommandExecutor {
             List<Report> reports = plugin.getDatabaseManager().getReports(filter, REPORTS_PER_PAGE, offset);
             
             String filterName = filter == null ? "All" : filter.name();
-            sender.sendMessage(ChatColor.GOLD + "=== " + filterName + " Reports (Page " + page + ") ===");
+            sender.sendMessage(ColorUtil.colorize("&6=== " + filterName + " Reports (Page " + page + ") ==="));
             
             if (reports.isEmpty()) {
-                sender.sendMessage(ChatColor.GREEN + "No reports found!");
+                sender.sendMessage(ColorUtil.colorize("&aNo reports found!"));
                 return true;
             }
             
             boolean canViewRealName = sender.hasPermission("picraft.report.view.realname");
             
             for (Report report : reports) {
-                String status = getStatusColor(report.getStatus()) + report.getStatus().name();
+                String statusColor = getStatusColorCode(report.getStatus());
+                String category = report.getCategory() != null ? "[" + report.getCategory() + "] " : "";
+                String message = report.getMessage().length() > 50 ? 
+                    report.getMessage().substring(0, 50) + "..." : report.getMessage();
                 
-                sender.sendMessage(String.format("%s#%d %s[%s] %sby %s %s- %s", 
-                    ChatColor.YELLOW, report.getId(),
-                    status, ChatColor.WHITE,
-                    report.getCategory() != null ? "[" + report.getCategory() + "] " : "",
-                    report.getDisplayReporter(canViewRealName),
-                    ChatColor.GRAY,
-                    report.getMessage().length() > 50 ? 
-                        report.getMessage().substring(0, 50) + "..." : report.getMessage()));
+                String displayText = String.format("&e#%d %s%s &f%sby %s &7- %s", 
+                    report.getId(), statusColor, report.getStatus().name(), category,
+                    report.getDisplayReporter(canViewRealName), message);
+                        
+                sender.sendMessage(ColorUtil.colorize(displayText));
             }
             
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Error loading reports.");
+            sender.sendMessage(ColorUtil.colorize("&cError loading reports."));
             e.printStackTrace();
         }
         
@@ -185,13 +185,13 @@ public class StaffCommands implements CommandExecutor {
     
     private boolean handleReportView(CommandSender sender, String[] args) {
         if (!sender.hasPermission("picraft.report.view")) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
         
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.RED + "Usage: /reportview <id>");
+            sender.sendMessage(ColorUtil.colorize("&cUsage: /reportview <id>"));
             return true;
         }
         
@@ -200,30 +200,31 @@ public class StaffCommands implements CommandExecutor {
             Report report = plugin.getDatabaseManager().getReport(id);
             
             if (report == null) {
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+                sender.sendMessage(ColorUtil.colorize(
                     plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("not_found")));
                 return true;
             }
             
             boolean canViewRealName = sender.hasPermission("picraft.report.view.realname");
+            String statusColor = getStatusColorCode(report.getStatus());
             
-            sender.sendMessage(ChatColor.GOLD + "=== Report #" + report.getId() + " ===");
-            sender.sendMessage(ChatColor.YELLOW + "Reporter: " + ChatColor.WHITE + report.getDisplayReporter(canViewRealName));
-            sender.sendMessage(ChatColor.YELLOW + "Category: " + ChatColor.WHITE + (report.getCategory() != null ? report.getCategory() : "None"));
-            sender.sendMessage(ChatColor.YELLOW + "Status: " + getStatusColor(report.getStatus()) + report.getStatus().name());
-            sender.sendMessage(ChatColor.YELLOW + "Location: " + ChatColor.WHITE + 
-                report.getWorld() + " " + report.getX() + " " + report.getY() + " " + report.getZ());
-            sender.sendMessage(ChatColor.YELLOW + "Time: " + ChatColor.WHITE + 
-                report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            sender.sendMessage(ColorUtil.colorize("&6=== Report #" + report.getId() + " ==="));
+            sender.sendMessage(ColorUtil.colorize("&eReporter: &f" + report.getDisplayReporter(canViewRealName)));
+            sender.sendMessage(ColorUtil.colorize("&eCategory: &f" + (report.getCategory() != null ? report.getCategory() : "None")));
+            sender.sendMessage(ColorUtil.colorize("&eStatus: " + statusColor + report.getStatus().name()));
+            sender.sendMessage(ColorUtil.colorize("&eLocation: &f" + 
+                report.getWorld() + " " + report.getX() + " " + report.getY() + " " + report.getZ()));
+            sender.sendMessage(ColorUtil.colorize("&eTime: &f" + 
+                report.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))));
             if (report.getAssignedTo() != null) {
-                sender.sendMessage(ChatColor.YELLOW + "Assigned to: " + ChatColor.WHITE + report.getAssignedTo());
+                sender.sendMessage(ColorUtil.colorize("&eAssigned to: &f" + report.getAssignedTo()));
             }
-            sender.sendMessage(ChatColor.YELLOW + "Message: " + ChatColor.WHITE + report.getMessage());
+            sender.sendMessage(ColorUtil.colorize("&eMessage: &f" + report.getMessage()));
             
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid report ID.");
+            sender.sendMessage(ColorUtil.colorize("&cInvalid report ID."));
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Error loading report.");
+            sender.sendMessage(ColorUtil.colorize("&cError loading report."));
             e.printStackTrace();
         }
         
@@ -232,13 +233,13 @@ public class StaffCommands implements CommandExecutor {
     
     private boolean handleReportRead(CommandSender sender, String[] args) {
         if (!sender.hasPermission("picraft.report.read")) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
         
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.RED + "Usage: /reportread <id>");
+            sender.sendMessage(ColorUtil.colorize("&cUsage: /reportread <id>"));
             return true;
         }
         
@@ -247,7 +248,7 @@ public class StaffCommands implements CommandExecutor {
             Report report = plugin.getDatabaseManager().getReport(id);
             
             if (report == null) {
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+                sender.sendMessage(ColorUtil.colorize(
                     plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("not_found")));
                 return true;
             }
@@ -255,13 +256,13 @@ public class StaffCommands implements CommandExecutor {
             plugin.getDatabaseManager().updateReportStatus(id, Report.Status.READ);
             
             String message = plugin.getConfigManager().getMessage("viewed").replace("{id}", String.valueOf(id));
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + message));
             
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid report ID.");
+            sender.sendMessage(ColorUtil.colorize("&cInvalid report ID."));
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Error updating report.");
+            sender.sendMessage(ColorUtil.colorize("&cError updating report."));
             e.printStackTrace();
         }
         
@@ -270,13 +271,13 @@ public class StaffCommands implements CommandExecutor {
     
     private boolean handleReportClear(CommandSender sender, String[] args) {
         if (!sender.hasPermission("picraft.report.clear")) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
         
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.RED + "Usage: /reportclear <id>");
+            sender.sendMessage(ColorUtil.colorize("&cUsage: /reportclear <id>"));
             return true;
         }
         
@@ -285,7 +286,7 @@ public class StaffCommands implements CommandExecutor {
             Report report = plugin.getDatabaseManager().getReport(id);
             
             if (report == null) {
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+                sender.sendMessage(ColorUtil.colorize(
                     plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("not_found")));
                 return true;
             }
@@ -293,13 +294,17 @@ public class StaffCommands implements CommandExecutor {
             plugin.getDatabaseManager().updateReportStatus(id, Report.Status.CLOSED);
             
             String message = plugin.getConfigManager().getMessage("cleared").replace("{id}", String.valueOf(id));
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + message));
             
+            // Notify about renumbering
+            sender.sendMessage(ColorUtil.colorize(
+                plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("reports_renumbered")));
+            
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid report ID.");
+            sender.sendMessage(ColorUtil.colorize("&cInvalid report ID."));
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Error updating report.");
+            sender.sendMessage(ColorUtil.colorize("&cError updating report."));
             e.printStackTrace();
         }
         
@@ -308,13 +313,13 @@ public class StaffCommands implements CommandExecutor {
     
     private boolean handleReportAssign(CommandSender sender, String[] args) {
         if (!sender.hasPermission("picraft.report.assign")) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
         
         if (args.length < 2) {
-            sender.sendMessage(ChatColor.RED + "Usage: /reportassign <id> <staff>");
+            sender.sendMessage(ColorUtil.colorize("&cUsage: /reportassign <id> <staff>"));
             return true;
         }
         
@@ -325,7 +330,7 @@ public class StaffCommands implements CommandExecutor {
             Report report = plugin.getDatabaseManager().getReport(id);
             
             if (report == null) {
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+                sender.sendMessage(ColorUtil.colorize(
                     plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("not_found")));
                 return true;
             }
@@ -335,13 +340,13 @@ public class StaffCommands implements CommandExecutor {
             String message = plugin.getConfigManager().getMessage("assigned")
                 .replace("{id}", String.valueOf(id))
                 .replace("{staff}", staffName);
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + message));
             
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid report ID.");
+            sender.sendMessage(ColorUtil.colorize("&cInvalid report ID."));
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Error assigning report.");
+            sender.sendMessage(ColorUtil.colorize("&cError assigning report."));
             e.printStackTrace();
         }
         
@@ -350,13 +355,13 @@ public class StaffCommands implements CommandExecutor {
     
     private boolean handleReportNotify(CommandSender sender, String[] args) {
         if (!sender.hasPermission("picraft.report.notify")) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
         
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command.");
+            sender.sendMessage(ColorUtil.colorize("&cOnly players can use this command."));
             return true;
         }
         
@@ -376,7 +381,7 @@ public class StaffCommands implements CommandExecutor {
                     plugin.getReportManager().setNotificationEnabled(player.getUniqueId(), !currentState);
                     break;
                 default:
-                    sender.sendMessage(ChatColor.RED + "Usage: /reportnotify [on|off|toggle]");
+                    sender.sendMessage(ColorUtil.colorize("&cUsage: /reportnotify [on|off|toggle]"));
                     return true;
             }
         } else {
@@ -388,7 +393,7 @@ public class StaffCommands implements CommandExecutor {
             plugin.getConfigManager().getMessage("notify_on") :
             plugin.getConfigManager().getMessage("notify_off");
         
-        sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+        sender.sendMessage(ColorUtil.colorize(
             plugin.getConfigManager().getPrefix() + message));
         
         return true;
@@ -396,18 +401,18 @@ public class StaffCommands implements CommandExecutor {
     
     private boolean handleReportTp(CommandSender sender, String[] args) {
         if (!sender.hasPermission("picraft.report.tp")) {
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
         
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command.");
+            sender.sendMessage(ColorUtil.colorize("&cOnly players can use this command."));
             return true;
         }
         
         if (args.length == 0) {
-            sender.sendMessage(ChatColor.RED + "Usage: /reporttp <id>");
+            sender.sendMessage(ColorUtil.colorize("&cUsage: /reporttp <id>"));
             return true;
         }
         
@@ -416,7 +421,7 @@ public class StaffCommands implements CommandExecutor {
             Report report = plugin.getDatabaseManager().getReport(id);
             
             if (report == null) {
-                sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+                sender.sendMessage(ColorUtil.colorize(
                     plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("not_found")));
                 return true;
             }
@@ -424,8 +429,9 @@ public class StaffCommands implements CommandExecutor {
             Player player = (Player) sender;
             World world = Bukkit.getWorld(report.getWorld());
             
+            
             if (world == null) {
-                sender.sendMessage(ChatColor.RED + "World not found: " + report.getWorld());
+                sender.sendMessage(ColorUtil.colorize("&cWorld not found: " + report.getWorld()));
                 return true;
             }
             
@@ -433,29 +439,29 @@ public class StaffCommands implements CommandExecutor {
             player.teleport(location);
             
             String message = plugin.getConfigManager().getMessage("teleported").replace("{id}", String.valueOf(id));
-            sender.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            sender.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + message));
             
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + "Invalid report ID.");
+            sender.sendMessage(ColorUtil.colorize("&cInvalid report ID."));
         } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Error teleporting to report location.");
+            sender.sendMessage(ColorUtil.colorize("&cError teleporting to report location."));
             e.printStackTrace();
         }
         
         return true;
     }
     
-    private ChatColor getStatusColor(Report.Status status) {
+    private String getStatusColorCode(Report.Status status) {
         switch (status) {
             case OPEN:
-                return ChatColor.RED;
+                return "&c";
             case READ:
-                return ChatColor.YELLOW;
+                return "&e";
             case CLOSED:
-                return ChatColor.GREEN;
+                return "&a";
             default:
-                return ChatColor.WHITE;
+                return "&f";
         }
     }
 }

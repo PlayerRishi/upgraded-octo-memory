@@ -10,15 +10,60 @@ notifications:
 
 discord:
   enabled: false             # requires DiscordSRV
-  channel_id: ""   # target channel
-  ping_role_id: ""          # optional role to @mention (empty to disable)
+  smart_notifications:
+    enabled: true
+    channels:
+      grief: ""              # Channel ID for grief reports
+      hack: ""               # Channel ID for hack reports
+      combat: ""             # Channel ID for combat reports
+      general: ""            # Fallback channel for other reports
+    roles:
+      grief: ""              # Role ID to ping for grief
+      hack: ""               # Role ID to ping for hacks
+      combat: ""             # Role ID to ping for combat
+      urgent: ""             # Role ID for urgent/auto-detected reports
   message: "**New report #{id}** by {displayReporter} [{category}] at {world} {x} {y} {z}\n{message}"
+  
+web_dashboard:
+  enabled: false
+  port: 8080
+  host: "localhost"
+  auth_key: "your-secret-key"  # Change this for security
 
 rules:
   file: "rules.txt"         # located in plugins/PiCraftPlugin/
   pagination:
     enabled: false
     lines_per_page: 12
+
+reports:
+  categories:
+    - "grief"
+    - "steal"
+    - "hack"
+    - "toxic"
+    - "combat"
+    - "exploit"
+    - "spam"
+    - "other"
+  base_tracking:
+    enabled: true
+    radius_limit: 2500        # Alert if report is outside spawn radius
+    log_coordinates: true     # Log all report coordinates for base tracking
+    enforce_radius: true      # Auto-report players building outside radius
+  evidence:
+    enabled: true
+    max_attachments: 5        # Max evidence links per report
+  auto_detection:
+    combat_logging:
+      enabled: true
+      combat_time: 15         # Seconds in combat before logout = combat log
+      auto_report: true       # Auto-create reports for combat loggers
+    seed_abuse:
+      enabled: true
+      structure_limit: 3      # Max structures found per hour before flagging
+      diamond_limit: 64       # Max diamonds mined per hour before flagging
+      auto_report: true       # Auto-create reports for suspected seed abuse
 
 messages:
   prefix: "&6[PiCraft]&r "
@@ -35,3 +80,6 @@ messages:
   notify_off: "&aReport notifications: &cOFF"
   teleported: "&aTeleported to report #{id} location."
   rules_not_found: "&cRules file not found. Please contact an administrator."
+  invalid_category: "&cInvalid category. Use: {categories}"
+  category_required: "&cCategory is required. Available: {categories}"
+  reports_renumbered: "&eReports have been renumbered to fill gaps."

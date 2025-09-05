@@ -19,10 +19,13 @@ public class Report {
     private int x, y, z;
     private Status status;
     private String assignedTo;
+    private String evidence;
+    private boolean autoDetected;
     
     public Report() {
         this.createdAt = LocalDateTime.now();
         this.status = Status.OPEN;
+        this.autoDetected = false;
     }
     
     public Report(UUID reporterUuid, String reporterName, boolean anonymous, String category, 
@@ -78,6 +81,12 @@ public class Report {
     
     public String getAssignedTo() { return assignedTo; }
     public void setAssignedTo(String assignedTo) { this.assignedTo = assignedTo; }
+    
+    public String getEvidence() { return evidence; }
+    public void setEvidence(String evidence) { this.evidence = evidence; }
+    
+    public boolean isAutoDetected() { return autoDetected; }
+    public void setAutoDetected(boolean autoDetected) { this.autoDetected = autoDetected; }
     
     public String getDisplayReporter(boolean canViewRealName) {
         if (anonymous && !canViewRealName) {

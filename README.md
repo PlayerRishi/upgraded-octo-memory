@@ -4,10 +4,11 @@ A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a c
 
 ## ✨ Features
 
-- **Player Reports**: `/report` with anonymous mode (`-anon`)
-- **Staff Tools**: Complete report management system
+- **Player Reports**: `/report` with required categories and anonymous mode (`-anon`)
+- **Staff Tools**: Complete report management system with auto-renumbering
 - **Rules System**: `/rules` reads from `rules.txt` file
-- **Discord Integration**: Optional DiscordSRV integration
+- **Discord Integration**: Optional DiscordSRV integration (no dependencies required)
+- **Base Tracking**: Automatic coordinate logging and spawn radius monitoring
 - **SQLite Storage**: Lightweight database with no external dependencies
 - **Cooldown System**: Prevents report spam
 - **Permission-based**: Works seamlessly with LuckPerms
@@ -16,7 +17,7 @@ A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a c
 
 ### Players
 
-- `/report [-anon] [category] <message>` - Creates a report with optional anonymous mode
+- `/report [-anon] <category> <message>` - Creates a report (category required, tab completion available)
 - `/rules [page]` - Displays server rules (with optional pagination)
 
 ### Staff
@@ -91,6 +92,24 @@ discord:
   message: "**New report #{id}**..." # Message template
 ```
 
+### Report Categories & Base Tracking
+```yaml
+reports:
+  categories:
+    - "grief"
+    - "steal" 
+    - "hack"
+    - "toxic"
+    - "combat"
+    - "exploit"
+    - "spam"
+    - "other"
+  base_tracking:
+    enabled: true
+    radius_limit: 2500        # Alert if report is outside spawn radius
+    log_coordinates: true     # Log all report coordinates for base tracking
+```
+
 ### Rules System
 ```yaml
 rules:
@@ -107,24 +126,26 @@ All messages are customizable with color codes (`&` format).
 
 ### Database Structure
 The plugin uses SQLite to store reports with these fields:
-- `id` - Auto-incrementing report ID
+- `id` - Sequential report ID (auto-renumbers when reports are closed)
 - `created_at` - Timestamp when report was created
 - `reporter_uuid` - UUID of the reporter
 - `reporter_name` - Name of the reporter
 - `anonymous` - Whether the report is anonymous
-- `category` - Optional category (griefing, hacking, etc.)
+- `category` - Required category (configurable: grief, steal, hack, toxic, combat, exploit, spam, other)
 - `message` - The report message
 - `world`, `x`, `y`, `z` - Location where report was filed
 - `status` - OPEN, READ, or CLOSED
 - `assigned_to` - Staff member assigned to the report
 
 ### Report Flow
-1. **Player reports**: `/report griefing Someone broke my chest`
+1. **Player reports**: `/report grief Someone broke my chest`
 2. **System saves**: Report stored in database with location
-3. **Staff notified**: Online staff get notification
-4. **Discord ping**: Optional Discord message sent
-5. **Staff manages**: View, read, assign, and close reports
-6. **Teleport**: Staff can teleport to report location
+3. **Coordinates logged**: Location saved to `base_coordinates.log` for tracking
+4. **Staff notified**: Online staff get notification
+5. **Discord ping**: Optional Discord message sent
+6. **Staff manages**: View, read, assign, and close reports
+7. **Auto-renumber**: When closed, remaining reports shift down (no gaps)
+8. **Teleport**: Staff can teleport to report location
 
 ### Anonymous Reports
 - Anonymous reports hide the reporter's name from normal staff
@@ -178,17 +199,24 @@ Each command:
 
 ### Basic Report
 ```
-/report griefing Someone destroyed my house at spawn
+/report grief Someone destroyed my house at spawn
 ```
 
 ### Anonymous Report
 ```
-/report -anon hacking Player123 is using fly hacks in PvP
+/report -anon hack Player123 is using fly hacks in PvP
 ```
 
-### Categorized Report
+### All Categories
 ```
-/report toxicity PlayerX was being very rude in chat
+/report grief <message>     # Griefing/destruction
+/report steal <message>     # Theft/stealing
+/report hack <message>      # Hacking/cheating
+/report toxic <message>     # Toxic behavior
+/report combat <message>    # Combat logging/PvP issues
+/report exploit <message>   # Bug exploitation
+/report spam <message>      # Chat spam
+/report other <message>     # Everything else
 ```
 
 ### Staff Workflow
@@ -211,10 +239,15 @@ Each command:
 ```
 
 ### DiscordSRV Setup
-1. Install DiscordSRV
+1. Install DiscordSRV (optional - plugin works without it)
 2. Set `discord.enabled: true` in config
 3. Add your Discord channel ID
-4. Optionally add role ID for mentions
+4. **Important**: Give bot permissions in the channel:
+   - View Channel
+   - Send Messages
+   - Read Message History
+   - Mention Everyone (for role pings)
+5. Optionally add role ID for mentions
 
 ### CoreProtect Integration
 This plugin works alongside CoreProtect:
@@ -230,6 +263,32 @@ git clone <repository>
 cd PiCraftPlugin
 ./gradlew build
 ```
+
+**Output JARs:**
+- `PiCraftPlugin-1.0-SNAPSHOT.jar` - Main plugin (use this)
+- `PiCraftPlugin-1.0-SNAPSHOT-sources.jar` - Source code for decompiling
+
+### Key Features Added
+
+**Required Categories:**
+- Categories are now mandatory for all reports
+- Tab completion shows available categories
+- Configurable category list in config.yml
+
+**Base Coordinate Tracking:**
+- All report locations logged to `base_coordinates.log`
+- Spawn radius checking (alerts if outside 2500 blocks)
+- Useful for tracking grief patterns and base locations
+
+**Auto-Renumbering:**
+- When a report is closed, higher-numbered reports shift down
+- No gaps in report numbering (always sequential)
+- Makes it easier for staff to reference reports
+
+**No Dependencies:**
+- Plugin works standalone (no required dependencies)
+- DiscordSRV, LuckPerms, CoreProtect are all optional
+- Graceful fallback when integrations aren't available
 
 ### Adding Features
 The modular design makes it easy to add features:

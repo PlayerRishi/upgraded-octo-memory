@@ -1,13 +1,14 @@
 package org.pluginmakers.piCraftPlugin.commands;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 import org.pluginmakers.piCraftPlugin.PiCraftPlugin;
 import org.pluginmakers.piCraftPlugin.model.Report;
+import org.pluginmakers.piCraftPlugin.utils.ColorUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,22 +23,24 @@ public class ReportCommand implements CommandExecutor {
     }
     
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "Only players can use this command.");
+            sender.sendMessage(ColorUtil.colorize("&cOnly players can use this command."));
             return true;
         }
         
         Player player = (Player) sender;
         
         if (!player.hasPermission("picraft.report.use")) {
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            player.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
             return true;
         }
         
         if (args.length == 0) {
-            player.sendMessage(ChatColor.RED + "Usage: /report [-anon] [category] <message>");
+            java.util.List<String> categories = plugin.getConfigManager().getReportCategories();
+            player.sendMessage(ColorUtil.colorize("&cUsage: /report [-anon] <category> <message>"));
+            player.sendMessage(ColorUtil.colorize("&eCategories: " + String.join(", ", categories)));
             return true;
         }
         
@@ -50,7 +53,7 @@ public class ReportCommand implements CommandExecutor {
             if (timeLeft > 0) {
                 String message = plugin.getConfigManager().getMessage("report_cooldown")
                     .replace("{time}", String.valueOf(timeLeft / 1000));
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+                player.sendMessage(ColorUtil.colorize(
                     plugin.getConfigManager().getPrefix() + message));
                 return true;
             }
@@ -66,7 +69,7 @@ public class ReportCommand implements CommandExecutor {
         // Check for -anon flag
         if (args[0].equalsIgnoreCase("-anon")) {
             if (!player.hasPermission("picraft.report.use.anon")) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+                player.sendMessage(ColorUtil.colorize(
                     plugin.getConfigManager().getPrefix() + plugin.getConfigManager().getMessage("no_permission")));
                 return true;
             }
@@ -75,21 +78,30 @@ public class ReportCommand implements CommandExecutor {
         }
         
         if (startIndex >= args.length) {
-            player.sendMessage(ChatColor.RED + "Usage: /report [-anon] [category] <message>");
+            java.util.List<String> categories = plugin.getConfigManager().getReportCategories();
+            player.sendMessage(ColorUtil.colorize("&cUsage: /report [-anon] <category> <message>"));
+            player.sendMessage(ColorUtil.colorize("&eCategories: " + String.join(", ", categories)));
             return true;
         }
         
-        // Check if next argument is a category (common categories)
-        String[] commonCategories = {"griefing", "hacking", "toxicity", "cheating", "spam", "other"};
-        if (startIndex < args.length) {
-            String potentialCategory = args[startIndex].toLowerCase();
-            for (String cat : commonCategories) {
-                if (cat.equals(potentialCategory)) {
-                    category = potentialCategory;
-                    startIndex++;
-                    break;
-                }
+        // Category is now required
+        java.util.List<String> validCategories = plugin.getConfigManager().getReportCategories();
+        String potentialCategory = args[startIndex].toLowerCase();
+        
+        boolean categoryFound = false;
+        for (String cat : validCategories) {
+            if (cat.toLowerCase().equals(potentialCategory)) {
+                category = cat;
+                categoryFound = true;
+                startIndex++;
+                break;
             }
+        }
+        
+        if (!categoryFound) {
+            player.sendMessage(ColorUtil.colorize("&cInvalid category: " + args[startIndex]));
+            player.sendMessage(ColorUtil.colorize("&eValid categories: " + String.join(", ", validCategories)));
+            return true;
         }
         
         // Build message
@@ -102,7 +114,12 @@ public class ReportCommand implements CommandExecutor {
         
         String message = messageBuilder.toString();
         if (message.isEmpty()) {
-            player.sendMessage(ChatColor.RED + "Please provide a message for your report.");
+            player.sendMessage(ColorUtil.colorize("&cPlease provide a message for your report."));
+            return true;
+        }
+        
+        if (startIndex >= args.length) {
+            player.sendMessage(ColorUtil.colorize("&cPlease provide a message for your report."));
             return true;
         }
         
@@ -126,19 +143,28 @@ public class ReportCommand implements CommandExecutor {
             // Update cooldown
             cooldowns.put(player.getUniqueId(), System.currentTimeMillis());
             
+            // Log coordinates for base tracking
+            plugin.getBaseTracker().logReportLocation(report);
+            
+            // Check if outside spawn radius
+            if (plugin.getBaseTracker().isOutsideSpawnRadius(loc)) {
+                String distance = plugin.getBaseTracker().getDistanceFromSpawn(loc);
+                plugin.getLogger().info("Report #" + reportId + " filed outside spawn radius: " + distance);
+            }
+            
             // Send confirmation
             String confirmMessage = anonymous ? 
                 plugin.getConfigManager().getMessage("report_submitted_anon") :
                 plugin.getConfigManager().getMessage("report_submitted");
             
-            player.sendMessage(ChatColor.translateAlternateColorCodes('&', 
+            player.sendMessage(ColorUtil.colorize(
                 plugin.getConfigManager().getPrefix() + confirmMessage));
             
             // Notify staff and Discord
             plugin.getReportManager().notifyNewReport(report);
             
         } catch (Exception e) {
-            player.sendMessage(ChatColor.RED + "Failed to submit report. Please try again.");
+            player.sendMessage(ColorUtil.colorize("&cFailed to submit report. Please try again."));
             e.printStackTrace();
         }
         

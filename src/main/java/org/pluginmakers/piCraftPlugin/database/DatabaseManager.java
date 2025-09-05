@@ -28,7 +28,7 @@ public class DatabaseManager {
     
     private void createTables() throws SQLException {
         String sql = "CREATE TABLE IF NOT EXISTS reports (" +
-                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "id INTEGER PRIMARY KEY," +
                     "created_at TEXT NOT NULL," +
                     "reporter_uuid TEXT NOT NULL," +
                     "reporter_name TEXT NOT NULL," +
@@ -40,7 +40,9 @@ public class DatabaseManager {
                     "y INTEGER NOT NULL," +
                     "z INTEGER NOT NULL," +
                     "status TEXT NOT NULL DEFAULT 'OPEN'," +
-                    "assigned_to TEXT" +
+                    "assigned_to TEXT," +
+                    "evidence TEXT," +
+                    "auto_detected BOOLEAN NOT NULL DEFAULT 0" +
                     ")";
         
         try (Statement stmt = connection.createStatement()) {
@@ -49,34 +51,32 @@ public class DatabaseManager {
     }
     
     public int createReport(Report report) throws SQLException {
-        String sql = "INSERT INTO reports (created_at, reporter_uuid, reporter_name, anonymous, category, " +
-                    "message, world, x, y, z, status, assigned_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        int nextId = getNextAvailableId();
         
-        try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, report.getCreatedAt().toString());
-            stmt.setString(2, report.getReporterUuid().toString());
-            stmt.setString(3, report.getReporterName());
-            stmt.setBoolean(4, report.isAnonymous());
-            stmt.setString(5, report.getCategory());
-            stmt.setString(6, report.getMessage());
-            stmt.setString(7, report.getWorld());
-            stmt.setInt(8, report.getX());
-            stmt.setInt(9, report.getY());
-            stmt.setInt(10, report.getZ());
-            stmt.setString(11, report.getStatus().name());
-            stmt.setString(12, report.getAssignedTo());
+        String sql = "INSERT INTO reports (id, created_at, reporter_uuid, reporter_name, anonymous, category, " +
+                    "message, world, x, y, z, status, assigned_to, evidence, auto_detected) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, nextId);
+            stmt.setString(2, report.getCreatedAt().toString());
+            stmt.setString(3, report.getReporterUuid().toString());
+            stmt.setString(4, report.getReporterName());
+            stmt.setBoolean(5, report.isAnonymous());
+            stmt.setString(6, report.getCategory());
+            stmt.setString(7, report.getMessage());
+            stmt.setString(8, report.getWorld());
+            stmt.setInt(9, report.getX());
+            stmt.setInt(10, report.getY());
+            stmt.setInt(11, report.getZ());
+            stmt.setString(12, report.getStatus().name());
+            stmt.setString(13, report.getAssignedTo());
+            stmt.setString(14, report.getEvidence());
+            stmt.setBoolean(15, report.isAutoDetected());
             
             stmt.executeUpdate();
-            
-            try (ResultSet keys = stmt.getGeneratedKeys()) {
-                if (keys.next()) {
-                    int id = keys.getInt(1);
-                    report.setId(id);
-                    return id;
-                }
-            }
+            report.setId(nextId);
+            return nextId;
         }
-        return -1;
     }
     
     public Report getReport(int id) throws SQLException {
@@ -144,6 +144,38 @@ public class DatabaseManager {
             stmt.setInt(2, id);
             stmt.executeUpdate();
         }
+        
+        // If closing a report, renumber remaining open reports
+        if (status == Report.Status.CLOSED) {
+            renumberReports(id);
+        }
+    }
+    
+    private void renumberReports(int closedId) throws SQLException {
+        // Get all open/read reports with ID > closedId
+        String selectSql = "SELECT id FROM reports WHERE status IN ('OPEN', 'READ') AND id > ? ORDER BY id";
+        
+        try (PreparedStatement selectStmt = connection.prepareStatement(selectSql)) {
+            selectStmt.setInt(1, closedId);
+            
+            try (ResultSet rs = selectStmt.executeQuery()) {
+                int newId = closedId;
+                
+                while (rs.next()) {
+                    int oldId = rs.getInt("id");
+                    
+                    // Update this report to the next available ID
+                    String updateSql = "UPDATE reports SET id = ? WHERE id = ?";
+                    try (PreparedStatement updateStmt = connection.prepareStatement(updateSql)) {
+                        updateStmt.setInt(1, newId);
+                        updateStmt.setInt(2, oldId);
+                        updateStmt.executeUpdate();
+                    }
+                    
+                    newId++;
+                }
+            }
+        }
     }
     
     public void assignReport(int id, String staffName) throws SQLException {
@@ -151,6 +183,16 @@ public class DatabaseManager {
         
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, staffName);
+            stmt.setInt(2, id);
+            stmt.executeUpdate();
+        }
+    }
+    
+    public void updateEvidence(int id, String evidence) throws SQLException {
+        String sql = "UPDATE reports SET evidence = ? WHERE id = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, evidence);
             stmt.setInt(2, id);
             stmt.executeUpdate();
         }
@@ -183,7 +225,22 @@ public class DatabaseManager {
         report.setZ(rs.getInt("z"));
         report.setStatus(Report.Status.valueOf(rs.getString("status")));
         report.setAssignedTo(rs.getString("assigned_to"));
+        report.setEvidence(rs.getString("evidence"));
+        report.setAutoDetected(rs.getBoolean("auto_detected"));
         return report;
+    }
+    
+    public int getNextAvailableId() throws SQLException {
+        String sql = "SELECT MIN(id + 1) as next_id FROM reports r1 WHERE NOT EXISTS (SELECT 1 FROM reports r2 WHERE r2.id = r1.id + 1 AND r2.status IN ('OPEN', 'READ'))";
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                int nextId = rs.getInt("next_id");
+                return nextId > 0 ? nextId : 1;
+            }
+        }
+        return 1;
     }
     
     public void close() {

@@ -6,12 +6,10 @@ authors: [ PlayerRishi ]
 description: A lightweight Paper/Spigot plugin for PiCraft Season 2 with player reports, staff tools, and rules system
 website: https://github.com/PlayerRishi/PiCraftPlugin
 
-softdepend: [DiscordSRV, LuckPerms, CoreProtect]
-
 commands:
   report:
     description: Report a player or issue to staff
-    usage: /report [-anon] [category] <message>
+    usage: /report [-anon] <category> <message>
     permission: picraft.report.use
   
   reports:
@@ -59,6 +57,11 @@ commands:
     description: Display server rules
     usage: /rules [page]
     permission: picraft.rules
+  
+  evidence:
+    description: Add evidence to a report
+    usage: /evidence <id> <url>
+    permission: picraft.report.evidence
 
 permissions:
   picraft.rules:
@@ -109,6 +112,10 @@ permissions:
     description: View real reporter behind anonymous reports
     default: op
   
+  picraft.report.evidence:
+    description: Add evidence to reports
+    default: op
+  
   picraft.*:
     description: All PiCraft permissions
     default: op
@@ -125,3 +132,4 @@ permissions:
       picraft.report.notify: true
       picraft.report.tp: true
       picraft.report.view.realname: true
+      picraft.report.evidence: true
