@@ -25,17 +25,53 @@ public class BaseRadiusEnforcer implements Listener {
             return;
         }
         
+        // Only check player-placed blocks, not naturally generated ones
+        if (event.isCancelled()) {
+            return;
+        }
+        
         Player player = event.getPlayer();
         Location location = event.getBlock().getLocation();
         
+        // Only monitor player-placed base blocks outside radius
         if (isBaseBlock(event.getBlock().getType()) && isOutsideRadius(location)) {
             createRadiusViolationReport(player, location);
         }
     }
     
     private boolean isBaseBlock(@NotNull Material material) {
-        return material == Material.CHEST || material == Material.FURNACE || 
-               material == Material.CRAFTING_TABLE || material == Material.BED;
+        // Storage blocks
+        if (material == Material.CHEST || material == Material.BARREL || 
+            material == Material.ENDER_CHEST || material == Material.SHULKER_BOX) {
+            return true;
+        }
+        
+        // Utility blocks
+        if (material == Material.FURNACE || material == Material.BLAST_FURNACE ||
+            material == Material.SMOKER || material == Material.BREWING_STAND ||
+            material == Material.CRAFTING_TABLE || material == Material.ANVIL ||
+            material == Material.CHIPPED_ANVIL || material == Material.DAMAGED_ANVIL ||
+            material == Material.ENCHANTING_TABLE || material == Material.BOOKSHELF) {
+            return true;
+        }
+        
+        // Lighting
+        if (material == Material.LANTERN || material == Material.SOUL_LANTERN) {
+            return true;
+        }
+        
+        // Beds (all colors except yellow and orange)
+        if (material == Material.WHITE_BED || material == Material.LIGHT_GRAY_BED ||
+            material == Material.GRAY_BED || material == Material.BLACK_BED ||
+            material == Material.BROWN_BED || material == Material.RED_BED ||
+            material == Material.PINK_BED || material == Material.MAGENTA_BED ||
+            material == Material.PURPLE_BED || material == Material.BLUE_BED ||
+            material == Material.LIGHT_BLUE_BED || material == Material.CYAN_BED ||
+            material == Material.GREEN_BED || material == Material.LIME_BED) {
+            return true;
+        }
+        
+        return false;
     }
     
     private boolean isOutsideRadius(@NotNull Location location) {
