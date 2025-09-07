@@ -7,11 +7,15 @@ A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a c
 - **Player Reports**: `/report` with required categories and anonymous mode (`-anon`)
 - **Staff Tools**: Complete report management system with auto-renumbering
 - **Rules System**: `/rules` reads from `rules.txt` file
-- **Discord Integration**: Optional DiscordSRV integration (no dependencies required)
+- **Discord Integration**: Optional DiscordSRV integration with smart notifications
 - **Base Tracking**: Automatic coordinate logging and spawn radius monitoring
+- **Auto-Detection**: Combat logging, seed abuse, and base radius enforcement
+- **Evidence System**: Attach screenshots/videos to reports with `/evidence`
+- **Web Dashboard**: Simple HTTP interface for viewing reports
 - **SQLite Storage**: Lightweight database with no external dependencies
 - **Cooldown System**: Prevents report spam
 - **Permission-based**: Works seamlessly with LuckPerms
+- **Modern API**: Uses Adventure API instead of deprecated ChatColor
 
 ## 🧩 Commands
 
@@ -30,6 +34,7 @@ A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a c
 - `/reportassign <id> <staff>` - Assign report to staff member
 - `/reportnotify [on|off|toggle]` - Toggle report notifications
 - `/reporttp <id>` - Teleport to report location
+- `/evidence <id> <url>` - Attach evidence (screenshots/videos) to reports
 
 ## 🔒 Permissions
 
@@ -48,6 +53,7 @@ A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a c
 - `picraft.report.notify` - Toggle notifications (default: op)
 - `picraft.report.tp` - Teleport to report locations (default: op)
 - `picraft.report.view.realname` - View real reporter behind anonymous reports (default: op)
+- `picraft.report.evidence` - Add evidence to reports (default: op)
 - `picraft.*` - All permissions (default: op)
 
 ## 📦 Installation

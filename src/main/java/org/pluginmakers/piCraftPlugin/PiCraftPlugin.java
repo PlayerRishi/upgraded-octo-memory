@@ -10,7 +10,10 @@ import org.pluginmakers.piCraftPlugin.config.ConfigManager;
 import org.pluginmakers.piCraftPlugin.database.DatabaseManager;
 import org.pluginmakers.piCraftPlugin.detection.BaseRadiusEnforcer;
 import org.pluginmakers.piCraftPlugin.detection.CombatLogDetector;
+import org.pluginmakers.piCraftPlugin.detection.DragonEggTracker;
+import org.pluginmakers.piCraftPlugin.detection.ReplayModDetector;
 import org.pluginmakers.piCraftPlugin.detection.SeedAbuseDetector;
+import org.pluginmakers.piCraftPlugin.detection.WeaknessPotionDetector;
 import org.pluginmakers.piCraftPlugin.listeners.PlayerJoinListener;
 import org.pluginmakers.piCraftPlugin.managers.BaseTracker;
 import org.pluginmakers.piCraftPlugin.managers.ReportManager;
@@ -63,6 +66,15 @@ public final class PiCraftPlugin extends JavaPlugin {
         }
         if (configManager.getConfig().getBoolean("reports.base_tracking.enforce_radius", true)) {
             getServer().getPluginManager().registerEvents(new BaseRadiusEnforcer(this), this);
+        }
+        if (configManager.getConfig().getBoolean("reports.auto_detection.replay_mod.enabled", true)) {
+            getServer().getPluginManager().registerEvents(new ReplayModDetector(this), this);
+        }
+        if (configManager.getConfig().getBoolean("reports.auto_detection.dragon_egg.enabled", true)) {
+            getServer().getPluginManager().registerEvents(new DragonEggTracker(this), this);
+        }
+        if (configManager.getConfig().getBoolean("reports.auto_detection.weakness_potions.enabled", true)) {
+            getServer().getPluginManager().registerEvents(new WeaknessPotionDetector(this), this);
         }
         
         // Create default rules file if it doesn't exist

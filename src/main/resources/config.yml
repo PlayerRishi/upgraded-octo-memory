@@ -64,6 +64,18 @@ reports:
       structure_limit: 3      # Max structures found per hour before flagging
       diamond_limit: 64       # Max diamonds mined per hour before flagging
       auto_report: true       # Auto-create reports for suspected seed abuse
+    replay_mod:
+      enabled: true
+      chunk_reload_limit: 5   # Max F3+A uses per minute before flagging
+      auto_report: true       # Auto-create reports for suspected replay mod usage
+    dragon_egg:
+      enabled: true
+      monitor_ender_chest: true # Alert if dragon egg placed in ender chest
+      auto_report: true       # Auto-create reports for violations
+    weakness_potions:
+      enabled: true
+      monitor_usage: true     # Alert on weakness potion/arrow usage
+      auto_report: true       # Auto-create reports for violations
 
 messages:
   prefix: "&6[PiCraft]&r "
