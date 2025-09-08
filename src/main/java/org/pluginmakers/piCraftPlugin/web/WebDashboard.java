@@ -48,6 +48,11 @@ public class WebDashboard {
     private class DashboardHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            if (isNotAuthenticated(exchange)) {
+                sendAuthRequired(exchange);
+                return;
+            }
+            
             String html = generateDashboardHtml();
             
             exchange.getResponseHeaders().set("Content-Type", "text/html");
@@ -62,6 +67,15 @@ public class WebDashboard {
     private class ReportsApiHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            if (isNotAuthenticated(exchange)) {
+                String error = "{\"error\":\"Authentication required\"}";
+                exchange.sendResponseHeaders(401, error.length());
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(error.getBytes());
+                }
+                return;
+            }
+            
             try {
                 List<Report> reports = plugin.getDatabaseManager().getReports(null, 50, 0);
                 String json = generateReportsJson(reports);
@@ -95,6 +109,28 @@ public class WebDashboard {
                "</body></html>";
     }
     
+    private boolean isNotAuthenticated(HttpExchange exchange) {
+        String query = exchange.getRequestURI().getQuery();
+        if (query == null) return true;
+        
+        String expectedKey = plugin.getConfigManager().getWebDashboardAuthKey();
+        return !query.contains("key=" + expectedKey);
+    }
+    
+    private void sendAuthRequired(HttpExchange exchange) throws IOException {
+        String html = "<!DOCTYPE html><html><head><title>Authentication Required</title></head>" +
+                     "<body><h1>🔒 Authentication Required</h1>" +
+                     "<p>Please provide the correct auth key in the URL:</p>" +
+                     "<code>http://localhost:8080/?key=YOUR_AUTH_KEY</code></body></html>";
+        
+        exchange.getResponseHeaders().set("Content-Type", "text/html");
+        exchange.sendResponseHeaders(401, html.length());
+        
+        try (OutputStream os = exchange.getResponseBody()) {
+            os.write(html.getBytes());
+        }
+    }
+    
     private String generateReportsJson(List<Report> reports) {
         StringBuilder json = new StringBuilder("[");
         for (int i = 0; i < reports.size(); i++) {
@@ -103,8 +139,8 @@ public class WebDashboard {
             json.append("{")
                 .append("\"id\":").append(r.getId()).append(",")
                 .append("\"reporter\":\"").append(r.getReporterName()).append("\",")
-                .append("\"category\":\"").append(r.getCategory() != null ? r.getCategory() : "").append("\",")
                 .append("\"status\":\"").append(r.getStatus()).append("\",")
+                .append("\"category\":\"").append(r.getCategory() != null ? r.getCategory() : "").append("\",")
                 .append("\"message\":\"").append(r.getMessage().replace("\"", "\\\"")).append("\"")
                 .append("}");
         }

@@ -13,6 +13,7 @@ import org.pluginmakers.piCraftPlugin.detection.CombatLogDetector;
 import org.pluginmakers.piCraftPlugin.detection.DragonEggTracker;
 import org.pluginmakers.piCraftPlugin.detection.ReplayModDetector;
 import org.pluginmakers.piCraftPlugin.detection.SeedAbuseDetector;
+import org.pluginmakers.piCraftPlugin.detection.VillagerKillDetector;
 import org.pluginmakers.piCraftPlugin.detection.WeaknessPotionDetector;
 import org.pluginmakers.piCraftPlugin.listeners.PlayerJoinListener;
 import org.pluginmakers.piCraftPlugin.managers.BaseTracker;
@@ -58,23 +59,28 @@ public final class PiCraftPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         
         // Register detection systems
-        if (configManager.getConfig().getBoolean("reports.auto_detection.combat_logging.enabled", true)) {
-            getServer().getPluginManager().registerEvents(new CombatLogDetector(this), this);
-        }
-        if (configManager.getConfig().getBoolean("reports.auto_detection.seed_abuse.enabled", true)) {
-            getServer().getPluginManager().registerEvents(new SeedAbuseDetector(this), this);
-        }
-        if (configManager.getConfig().getBoolean("reports.base_tracking.enforce_radius", true)) {
-            getServer().getPluginManager().registerEvents(new BaseRadiusEnforcer(this), this);
-        }
-        if (configManager.getConfig().getBoolean("reports.auto_detection.replay_mod.enabled", true)) {
-            getServer().getPluginManager().registerEvents(new ReplayModDetector(this), this);
-        }
-        if (configManager.getConfig().getBoolean("reports.auto_detection.dragon_egg.enabled", true)) {
-            getServer().getPluginManager().registerEvents(new DragonEggTracker(this), this);
-        }
-        if (configManager.getConfig().getBoolean("reports.auto_detection.weakness_potions.enabled", true)) {
-            getServer().getPluginManager().registerEvents(new WeaknessPotionDetector(this), this);
+        if (configManager != null && configManager.getConfig() != null) {
+            if (configManager.getConfig().getBoolean("reports.auto_detection.combat_logging.enabled", true)) {
+                getServer().getPluginManager().registerEvents(new CombatLogDetector(this), this);
+            }
+            if (configManager.getConfig().getBoolean("reports.auto_detection.seed_abuse.enabled", true)) {
+                getServer().getPluginManager().registerEvents(new SeedAbuseDetector(this), this);
+            }
+            if (configManager.getConfig().getBoolean("reports.base_tracking.enforce_radius", true)) {
+                getServer().getPluginManager().registerEvents(new BaseRadiusEnforcer(this), this);
+            }
+            if (configManager.getConfig().getBoolean("reports.auto_detection.replay_mod.enabled", true)) {
+                getServer().getPluginManager().registerEvents(new ReplayModDetector(this), this);
+            }
+            if (configManager.getConfig().getBoolean("reports.auto_detection.dragon_egg.enabled", true)) {
+                getServer().getPluginManager().registerEvents(new DragonEggTracker(this), this);
+            }
+            if (configManager.getConfig().getBoolean("reports.auto_detection.weakness_potions.enabled", true)) {
+                getServer().getPluginManager().registerEvents(new WeaknessPotionDetector(this), this);
+            }
+            if (configManager.getConfig().getBoolean("reports.auto_detection.villager_kills.enabled", true)) {
+                getServer().getPluginManager().registerEvents(new VillagerKillDetector(this), this);
+            }
         }
         
         // Create default rules file if it doesn't exist
@@ -99,69 +105,91 @@ public final class PiCraftPlugin extends JavaPlugin {
     
     private void registerCommands() {
         // Player commands
-        getCommand("report").setExecutor(new ReportCommand(this));
-        getCommand("report").setTabCompleter(new ReportTabCompleter(this));
-        getCommand("rules").setExecutor(new RulesCommand(this));
+        if (getCommand("report") != null) {
+            getCommand("report").setExecutor(new ReportCommand(this));
+            getCommand("report").setTabCompleter(new ReportTabCompleter(this));
+        }
+        if (getCommand("rules") != null) {
+            getCommand("rules").setExecutor(new RulesCommand(this));
+        }
         
         // Staff commands
         StaffCommands staffCommands = new StaffCommands(this);
-        getCommand("reports").setExecutor(staffCommands);
-        getCommand("reportlist").setExecutor(staffCommands);
-        getCommand("reportview").setExecutor(staffCommands);
-        getCommand("reportread").setExecutor(staffCommands);
-        getCommand("reportclear").setExecutor(staffCommands);
-        getCommand("reportassign").setExecutor(staffCommands);
-        getCommand("reportnotify").setExecutor(staffCommands);
-        getCommand("reporttp").setExecutor(staffCommands);
-        getCommand("evidence").setExecutor(new EvidenceCommand(this));
+        if (getCommand("reports") != null) getCommand("reports").setExecutor(staffCommands);
+        if (getCommand("reportlist") != null) getCommand("reportlist").setExecutor(staffCommands);
+        if (getCommand("reportview") != null) getCommand("reportview").setExecutor(staffCommands);
+        if (getCommand("reportread") != null) getCommand("reportread").setExecutor(staffCommands);
+        if (getCommand("reportclear") != null) getCommand("reportclear").setExecutor(staffCommands);
+        if (getCommand("reportassign") != null) getCommand("reportassign").setExecutor(staffCommands);
+        if (getCommand("reportnotify") != null) getCommand("reportnotify").setExecutor(staffCommands);
+        if (getCommand("reporttp") != null) getCommand("reporttp").setExecutor(staffCommands);
+        if (getCommand("evidence") != null) getCommand("evidence").setExecutor(new EvidenceCommand(this));
     }
     
     private void createDefaultRulesFile() {
-        File rulesFile = new File(getDataFolder(), configManager.getRulesFile());
+        File rulesFile = new File(getDataFolder(), configManager != null ? configManager.getRulesFile() : "rules.txt");
         
         if (!rulesFile.exists()) {
             try {
                 if (!getDataFolder().exists()) {
-                    getDataFolder().mkdirs();
+                    if (!getDataFolder().mkdirs()) {
+                        getLogger().warning("Failed to create plugin data folder");
+                    }
                 }
                 
-                String defaultRules = "# Rules of the Server:\n\n" +
-                    "## Hard Enforced Rules:\n" +
-                    "### - No exploiting\n" +
-                    "### - No Duping\n" +
-                    "### - No Xray or Hacking\n" +
-                    "### - Be respectful and Family Friendly\n" +
-                    "### - Have fun!\n" +
-                    "- Breaking these will result in a 3 day ban\n" +
-                    "- If anyone finds dupe stashes IMMEDIATELY REPORT to staff or any of the server mods!\n\n" +
-                    "## Soft Enforced Rules:\n" +
-                    "### - No Combat Logging\n" +
-                    "### - This includes randomly PvP-ing at spawn\n" +
-                    "### - Replay Mod/Flashback may not be used during gameplay or events to find traps and etc.\n" +
-                    "### - These mods may only be used after logging off after a session, and they may not be used for base hunting\n" +
-                    "### - No F3+A to reload chunks\n" +
-                    "### - All bases need to be built within a 2500 block radius of Spawn\n" +
-                    "### - No Stream Sniping\n" +
-                    "### - No crazy griefing (like destroying whole bases, taking a block or two or leaving a message is fine)\n" +
-                    "### - No crazy stealing (Like taking a lot of important things at once)\n" +
-                    "### - No Dragon Egg inside of Ender Chest\n" +
-                    "### - DO NOT abuse the seed to get an unfair advantage!\n" +
-                    "### - No Toxicity\n\n" +
-                    "## Spawn Rules:\n" +
-                    "### - No crazy insane battles right at spawn.\n" +
-                    "### - No griefing at all\n\n" +
-                    "## Farm Rules:\n" +
-                    "### - No auto AFK raid farms\n" +
-                    "### - No auto AFK wither-skeleton farms\n" +
-                    "### - No auto AFK wither/obsidian farms\n\n" +
-                    "## Item Rules:\n" +
-                    "### - No Elytra (During Combat)\n" +
-                    "### - No End Crystals (During Combat)\n" +
-                    "### - No Respawn Anchors (During Combat)\n" +
-                    "### - No Beds (During Combat)\n" +
-                    "### - No Restocking of items while in combat with use of Shulkers/Ender-Chests/Chests\n" +
-                    "### - No weakness potions or arrows\n\n" +
-                    "## Remember to always be friendly and HAVE FUN!";
+                String defaultRules = """
+                    # Rules of the Server:
+                    
+                    ## Hard Enforced Rules:
+                    ### - No exploiting
+                    ### - No Duping
+                    ### - No Xray or Hacking
+                    ### - Be respectful and Family Friendly
+                    ### - Have fun!
+                    - Breaking these will result in a 3 day ban
+                    - If anyone finds dupe stashes IMMEDIATELY REPORT to <@1313691983126069289> or <@873986014937481346>, or any of the server mods!
+                    
+                    ## Soft Enforced Rules:
+                    ### - No Combat Logging
+                          ### - This includes randomly PvP-ing at spawn
+                    ### - Replay Mod/Flashback may not be used during gameplay or events to find traps and etc.
+                          ### - These mods may only be used after logging off after a session, and they may not be used for base hunting
+                    ### - No F3+A to reload chunks
+                    ### - All bases need to be built within a 2500 block radius of Spawn
+                    ### - No Stream Sniping (IDK if anyone actually streams)
+                    ### - No crazy ahh griefing (like destroying whole bases, taking a block or two or leaving a message is fine. you get the idea)
+                    ### - DO NOT steal more than 64x of any item from any player, you can steal upon a kill.
+                    ### - No Dragon Egg inside of Ender Chest
+                    ### - DO NOT abuse the seed to get an unfair advantage!
+                    ### - No Toxicity
+                    ### - No mass killing of pets
+                    ### - No killing of villagers
+                    
+                    ## Spawn Rules:
+                    ### - No crazy insane battles right at spawn.
+                    ### - No griefing at all
+                    ### - No bases right at spawn
+                    ### - Spawn is a 160 by 160 block radius from the spawn point/a decided location by everyone near the original spawn point
+                    
+                    ## Farm Rules:
+                    ### - No auto AFK raid farms
+                    ### - No auto AFK wither-skeleton farms
+                    
+                    ## Item Rules:
+                    ### - No Elytra (During Combat)
+                    ### - Only 2 netherite armour pieces and any netherite tools are allowed
+                    ### - Maximum of 8 End Crystals/Respawn Anchors, per fight
+                    ### - No Restocking of items while in combat with use of Shulkers/Ender-Chests/Chests
+                    ### - No weakness potions or arrows
+                    
+                    ## How to join:
+                    ### Name: PiCraft Season 2
+                    ### IP: 71.187.21.145
+                    ### Any Version
+                    
+                    ## Remember to always be friendly and HAVE FUN!
+                    """;
+
                 
                 Files.write(rulesFile.toPath(), defaultRules.getBytes());
                 getLogger().info("Created default rules.txt file");

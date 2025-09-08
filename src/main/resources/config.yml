@@ -76,6 +76,9 @@ reports:
       enabled: true
       monitor_usage: true     # Alert on weakness potion/arrow usage
       auto_report: true       # Auto-create reports for violations
+    villager_kills:
+      enabled: true
+      auto_report: true       # Auto-create reports for villager kills
 
 messages:
   prefix: "&6[PiCraft]&r "

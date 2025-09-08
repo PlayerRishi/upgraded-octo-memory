@@ -1,6 +1,6 @@
 # 🌐 PiCraft Plugin
 
-A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a clean player report system, simple staff tools, and a /rules command that reads from a separate rules.txt file. Works nicely with LuckPerms, CoreProtect, and DiscordSRV.
+A comprehensive Paper/Spigot plugin for PiCraft Season 2 featuring an advanced report system, automated rule enforcement, smart Discord integration, and web dashboard. Includes combat log detection, seed abuse monitoring, dragon egg tracking, weakness potion prevention, and base radius enforcement.
 
 ## ✨ Features
 
@@ -56,7 +56,7 @@ A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a c
 - `picraft.report.evidence` - Add evidence to reports (default: op)
 - `picraft.*` - All permissions (default: op)
 
-## 📦 Installation
+## 📦 Quick Installation
 
 1. **Download**: Place `PiCraftPlugin.jar` in your `plugins/` folder
 2. **Start Server**: Start the server once to generate config files
@@ -65,6 +65,93 @@ A lightweight, zero-bloat Paper/Spigot plugin for PiCraft Season 2 that adds a c
 5. **Optional**: Install DiscordSRV for Discord integration
 6. **Permissions**: Set up permissions with LuckPerms or your permission plugin
 7. **Reload**: Use `/reload confirm` or restart the server
+
+## 🚀 Complete Setup Guide
+
+### **Step 1: Installation**
+```bash
+# 1. Download PiCraftPlugin-1.0-SNAPSHOT.jar
+# 2. Place in plugins/ folder
+# 3. Start server (generates config files)
+# 4. Check console for "PiCraft Plugin has been enabled!"
+```
+
+### **Step 2: Basic Configuration**
+```yaml
+# Edit plugins/PiCraftPlugin/config.yml
+cooldowns:
+  report: 30              # Seconds between reports
+
+reports:
+  categories:             # Customize report categories
+    - "grief"
+    - "steal"
+    - "hack"
+    - "toxic"
+    - "combat"
+    - "exploit"
+    - "spam"
+    - "other"
+```
+
+### **Step 3: PiCraft Season 2 Auto-Detection**
+```yaml
+reports:
+  auto_detection:
+    combat_logging:
+      enabled: true
+      combat_time: 15       # Combat log detection
+    dragon_egg:
+      enabled: true         # Dragon egg ender chest prevention
+    weakness_potions:
+      enabled: true         # Weakness potion blocking
+    seed_abuse:
+      enabled: true
+      structure_limit: 5    # Structure finding limit
+      diamond_limit: 128    # Diamond mining limit
+    replay_mod:
+      enabled: true
+      chunk_reload_limit: 5 # F3+A detection
+  base_tracking:
+    enforce_radius: true
+    radius_limit: 2500      # Base radius enforcement
+```
+
+### **Step 4: Permissions Setup**
+```bash
+# Player permissions
+/lp group default permission set picraft.rules true
+/lp group default permission set picraft.report.use true
+
+# Staff permissions
+/lp group mod permission set picraft.report.view true
+/lp group mod permission set picraft.report.clear true
+/lp group admin permission set picraft.* true
+```
+
+### **Step 5: Discord Integration (Optional)**
+```yaml
+discord:
+  enabled: true
+  smart_notifications:
+    channels:
+      grief: "123456789012345678"    # Channel IDs
+      hack: "234567890123456789"
+      combat: "345678901234567890"
+    roles:
+      grief: "567890123456789012"    # Role IDs for pings
+      hack: "678901234567890123"
+      urgent: "890123456789012345"   # Auto-detection alerts
+```
+
+### **Step 6: Web Dashboard (Optional)**
+```yaml
+web_dashboard:
+  enabled: true
+  port: 8080
+  auth_key: "PiCraft2024-StaffOnly"  # CHANGE THIS!
+```
+**Access:** `http://localhost:8080/?key=PiCraft2024-StaffOnly`
 
 ## ⚙️ Configuration
 
@@ -321,6 +408,52 @@ Contributions welcome! Please:
 4. Test thoroughly
 5. Submit a pull request
 
+## 🎯 **PiCraft Season 2 Features**
+
+### **Automatic Rule Enforcement**
+- 🚫 **Dragon Egg Protection**: Blocks ender chest placement (auto-reports)
+- 🚫 **Weakness Potion Prevention**: Blocks usage (auto-reports)
+- 📊 **Combat Log Detection**: 15-second PvP timer (auto-reports)
+- 📊 **Seed Abuse Monitoring**: Diamond/structure limits (auto-reports)
+- 📊 **Replay Mod Detection**: F3+A usage monitoring (auto-reports)
+- 📊 **Base Radius Enforcement**: 2500-block limit (auto-reports)
+
+### **Staff Tools**
+- 📱 **Mobile Dashboard**: Secure web interface with authentication
+- 🔗 **Evidence System**: Attach screenshots/videos to reports
+- 🎯 **Smart Discord**: Category-specific channels and role pings
+- 📍 **Location Tracking**: Auto-log coordinates for pattern analysis
+- 🔄 **Auto-Renumbering**: Sequential report IDs with no gaps
+
+## 🛠️ **Troubleshooting**
+
+### **Common Issues**
+```bash
+# Plugin not loading
+- Check Minecraft version (1.21+ required)
+- Verify JAR file integrity
+
+# Discord not working
+- Install DiscordSRV first
+- Check bot permissions in channels
+- Verify channel/role IDs (18 digits)
+
+# Auto-detection too sensitive
+- Increase limits in config.yml
+- Or disable: enabled: false
+
+# Web dashboard not accessible
+- Check auth key in URL
+- Verify port 8080 not blocked
+```
+
 ---
 
-**Remember**: This plugin is designed to be lightweight and vanilla-friendly. Keep it simple, keep it fast! 🚀
+## 📊 **Plugin Stats**
+- **Commands**: 12
+- **Permissions**: 15  
+- **Auto-Detection Systems**: 6
+- **Zero Dependencies**: All integrations optional
+- **Modern API**: Adventure-based, future-proof
+
+**Built specifically for PiCraft Season 2** - Complete rule enforcement with zero bloat! 🚀
