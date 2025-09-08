@@ -4,7 +4,7 @@ main: org.pluginmakers.piCraftPlugin.PiCraftPlugin
 api-version: '1.21'
 authors: [ PlayerRishi ]
 description: A lightweight Paper/Spigot plugin for PiCraft Season 2 with player reports, staff tools, and rules system
-website: https://github.com/PlayerRishi/PiCraftPlugin
+website: https://github.com/PlayerRishi/upgraded-octo-memory/
 
 commands:
   report:

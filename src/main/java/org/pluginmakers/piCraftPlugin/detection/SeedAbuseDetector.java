@@ -65,19 +65,55 @@ public class SeedAbuseDetector implements Listener {
     }
     
     private boolean isNearStructure(@NotNull Player player) {
-        // Simplified structure detection - check for common structure blocks
+        // Only detect naturally generated structure blocks
         int radius = 10;
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
-                Material block = player.getLocation().add(x, 0, z).getBlock().getType();
-                if (block == Material.MOSSY_COBBLESTONE || block == Material.SPAWNER || 
-                    block == Material.END_PORTAL_FRAME || block == Material.NETHER_BRICKS ||
-                    block == Material.GILDED_BLACKSTONE) {
+                org.bukkit.block.Block block = player.getLocation().add(x, 0, z).getBlock();
+                Material material = block.getType();
+                
+                // Check for structure blocks that are naturally generated
+                if ((material == Material.MOSSY_COBBLESTONE || material == Material.SPAWNER || 
+                     material == Material.END_PORTAL_FRAME || material == Material.NETHER_BRICKS ||
+                     material == Material.GILDED_BLACKSTONE) && isNaturallyGenerated(block)) {
                     return true;
                 }
             }
         }
         return false;
+    }
+    
+    private boolean isNaturallyGenerated(@NotNull org.bukkit.block.Block block) {
+        // Check if block is in a naturally generated structure
+        // Spawners and End Portal Frames can only be naturally generated
+        if (block.getType() == Material.SPAWNER || block.getType() == Material.END_PORTAL_FRAME) {
+            return true;
+        }
+        
+        // For other blocks, check if they're part of a structure pattern
+        // (This is a simplified check - in a real implementation you'd want more sophisticated detection)
+        return hasStructurePattern(block);
+    }
+    
+    private boolean hasStructurePattern(@NotNull org.bukkit.block.Block block) {
+        // Simple pattern detection - check for multiple structure blocks nearby
+        int structureBlocks = 0;
+        int checkRadius = 3;
+        
+        for (int x = -checkRadius; x <= checkRadius; x++) {
+            for (int y = -checkRadius; y <= checkRadius; y++) {
+                for (int z = -checkRadius; z <= checkRadius; z++) {
+                    Material nearby = block.getRelative(x, y, z).getType();
+                    if (nearby == Material.MOSSY_COBBLESTONE || nearby == Material.NETHER_BRICKS ||
+                        nearby == Material.GILDED_BLACKSTONE || nearby == Material.BLACKSTONE) {
+                        structureBlocks++;
+                    }
+                }
+            }
+        }
+        
+        // If there are multiple structure blocks nearby, likely natural generation
+        return structureBlocks >= 5;
     }
     
     private PlayerStats getPlayerStats(UUID playerId) {
