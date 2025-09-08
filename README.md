@@ -108,7 +108,7 @@ reports:
     seed_abuse:
       enabled: true
       structure_limit: 5    # Structure finding limit
-      diamond_limit: 128    # Diamond mining limit
+      diamond_limit: 64    # Diamond mining limit
     replay_mod:
       enabled: true
       chunk_reload_limit: 5 # F3+A detection
@@ -149,9 +149,9 @@ discord:
 web_dashboard:
   enabled: true
   port: 8080
-  auth_key: "PiCraft2024-StaffOnly"  # CHANGE THIS!
+  auth_key: "your-secret-key"  # CHANGE THIS!
 ```
-**Access:** `http://localhost:8080/?key=PiCraft2024-StaffOnly`
+**Access:** `http://localhost:8080/?key=your-secret-key`
 
 ## ⚙️ Configuration
 
