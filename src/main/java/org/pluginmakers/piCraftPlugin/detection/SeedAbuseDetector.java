@@ -71,7 +71,8 @@ public class SeedAbuseDetector implements Listener {
             for (int z = -radius; z <= radius; z++) {
                 Material block = player.getLocation().add(x, 0, z).getBlock().getType();
                 if (block == Material.MOSSY_COBBLESTONE || block == Material.SPAWNER || 
-                    block == Material.END_PORTAL_FRAME || block == Material.NETHER_BRICKS) {
+                    block == Material.END_PORTAL_FRAME || block == Material.NETHER_BRICKS ||
+                    block == Material.GILDED_BLACKSTONE) {
                     return true;
                 }
             }

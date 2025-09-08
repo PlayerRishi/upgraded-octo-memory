@@ -61,8 +61,8 @@ reports:
       auto_report: true       # Auto-create reports for combat loggers
     seed_abuse:
       enabled: true
-      structure_limit: 3      # Max structures found per hour before flagging
-      diamond_limit: 64       # Max diamonds mined per hour before flagging
+      structure_limit: 5      # Max structures found per hour before flagging
+      diamond_limit: 128      # Max diamonds mined per hour before flagging
       auto_report: true       # Auto-create reports for suspected seed abuse
     replay_mod:
       enabled: true
