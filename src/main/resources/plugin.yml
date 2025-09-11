@@ -62,6 +62,16 @@ commands:
     description: Add evidence to a report
     usage: /evidence <id> <url>
     permission: picraft.report.evidence
+  
+  home:
+    description: Teleport to your bed spawn location
+    usage: /home
+    permission: picraft.home
+  
+  spawn:
+    description: Teleport to server spawn
+    usage: /spawn
+    permission: picraft.spawn
 
 permissions:
   picraft.rules:
@@ -116,6 +126,14 @@ permissions:
     description: Add evidence to reports
     default: op
   
+  picraft.home:
+    description: Use /home command
+    default: true
+  
+  picraft.spawn:
+    description: Use /spawn command
+    default: true
+  
   picraft.*:
     description: All PiCraft permissions
     default: op
@@ -133,3 +151,5 @@ permissions:
       picraft.report.tp: true
       picraft.report.view.realname: true
       picraft.report.evidence: true
+      picraft.home: true
+      picraft.spawn: true

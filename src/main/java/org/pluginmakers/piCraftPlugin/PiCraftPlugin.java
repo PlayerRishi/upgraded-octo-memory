@@ -2,9 +2,11 @@ package org.pluginmakers.piCraftPlugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
 import org.pluginmakers.piCraftPlugin.commands.EvidenceCommand;
+import org.pluginmakers.piCraftPlugin.commands.HomeCommand;
 import org.pluginmakers.piCraftPlugin.commands.ReportCommand;
 import org.pluginmakers.piCraftPlugin.commands.ReportTabCompleter;
 import org.pluginmakers.piCraftPlugin.commands.RulesCommand;
+import org.pluginmakers.piCraftPlugin.commands.SpawnCommand;
 import org.pluginmakers.piCraftPlugin.commands.StaffCommands;
 import org.pluginmakers.piCraftPlugin.config.ConfigManager;
 import org.pluginmakers.piCraftPlugin.database.DatabaseManager;
@@ -124,6 +126,8 @@ public final class PiCraftPlugin extends JavaPlugin {
         if (getCommand("reportnotify") != null) getCommand("reportnotify").setExecutor(staffCommands);
         if (getCommand("reporttp") != null) getCommand("reporttp").setExecutor(staffCommands);
         if (getCommand("evidence") != null) getCommand("evidence").setExecutor(new EvidenceCommand(this));
+        if (getCommand("home") != null) getCommand("home").setExecutor(new HomeCommand(this));
+        if (getCommand("spawn") != null) getCommand("spawn").setExecutor(new SpawnCommand(this));
     }
     
     private void createDefaultRulesFile() {
