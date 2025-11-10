@@ -45,8 +45,20 @@ public class DatabaseManager {
                     "auto_detected BOOLEAN NOT NULL DEFAULT 0" +
                     ")";
         
+        String violationsSql = "CREATE TABLE IF NOT EXISTS chat_violations (" +
+                              "uuid TEXT PRIMARY KEY," +
+                              "offense_count INTEGER NOT NULL DEFAULT 0" +
+                              ")";
+        
+        String mutesSql = "CREATE TABLE IF NOT EXISTS chat_mutes (" +
+                         "uuid TEXT PRIMARY KEY," +
+                         "mute_until INTEGER NOT NULL" +
+                         ")";
+        
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
+            stmt.execute(violationsSql);
+            stmt.execute(mutesSql);
         }
     }
     
@@ -243,6 +255,72 @@ public class DatabaseManager {
         return 1;
     }
     
+    public int getChatViolations(UUID uuid) throws SQLException {
+        String sql = "SELECT offense_count FROM chat_violations WHERE uuid = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, uuid.toString());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("offense_count");
+                }
+            }
+        }
+        return 0;
+    }
+    
+    public void incrementChatViolations(UUID uuid) throws SQLException {
+        String sql = "INSERT OR REPLACE INTO chat_violations (uuid, offense_count) VALUES (?, COALESCE((SELECT offense_count FROM chat_violations WHERE uuid = ?), 0) + 1)";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, uuid.toString());
+            stmt.setString(2, uuid.toString());
+            stmt.executeUpdate();
+        }
+    }
+    
+    public void mutePlayer(UUID uuid, long muteUntil) throws SQLException {
+        String sql = "INSERT OR REPLACE INTO chat_mutes (uuid, mute_until) VALUES (?, ?)";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, uuid.toString());
+            stmt.setLong(2, muteUntil);
+            stmt.executeUpdate();
+        }
+    }
+    
+    public boolean isPlayerMuted(UUID uuid) throws SQLException {
+        String sql = "SELECT mute_until FROM chat_mutes WHERE uuid = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, uuid.toString());
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    long muteUntil = rs.getLong("mute_until");
+                    if (System.currentTimeMillis() < muteUntil) {
+                        return true;
+                    } else {
+                        // Mute expired, remove it
+                        unmutePlayer(uuid);
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    public void unmutePlayer(UUID uuid) throws SQLException {
+        String sql = "DELETE FROM chat_mutes WHERE uuid = ?";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, uuid.toString());
+            stmt.executeUpdate();
+        }
+    }
+    
+
     public void close() {
         if (connection != null) {
             try {

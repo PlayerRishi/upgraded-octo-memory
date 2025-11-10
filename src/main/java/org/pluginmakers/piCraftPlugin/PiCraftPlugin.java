@@ -3,6 +3,7 @@ package org.pluginmakers.piCraftPlugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.pluginmakers.piCraftPlugin.commands.EvidenceCommand;
 import org.pluginmakers.piCraftPlugin.commands.HomeCommand;
+import org.pluginmakers.piCraftPlugin.commands.NoMansCommand;
 import org.pluginmakers.piCraftPlugin.commands.ReportCommand;
 import org.pluginmakers.piCraftPlugin.commands.ReportTabCompleter;
 import org.pluginmakers.piCraftPlugin.commands.RulesCommand;
@@ -16,10 +17,14 @@ import org.pluginmakers.piCraftPlugin.detection.DragonEggTracker;
 import org.pluginmakers.piCraftPlugin.detection.ReplayModDetector;
 import org.pluginmakers.piCraftPlugin.detection.SeedAbuseDetector;
 import org.pluginmakers.piCraftPlugin.detection.VillagerKillDetector;
-import org.pluginmakers.piCraftPlugin.detection.WeaknessPotionDetector;
+import org.pluginmakers.piCraftPlugin.listeners.ChatFilter;
+import org.pluginmakers.piCraftPlugin.listeners.CombatQuitPrevention;
 import org.pluginmakers.piCraftPlugin.listeners.PlayerJoinListener;
 import org.pluginmakers.piCraftPlugin.managers.BaseTracker;
+import org.pluginmakers.piCraftPlugin.managers.CombatTagManager;
+import org.pluginmakers.piCraftPlugin.managers.NoMansLandManager;
 import org.pluginmakers.piCraftPlugin.managers.ReportManager;
+import org.pluginmakers.piCraftPlugin.recipes.NametagRecipe;
 import org.pluginmakers.piCraftPlugin.web.WebDashboard;
 
 import java.io.File;
@@ -33,6 +38,8 @@ public final class PiCraftPlugin extends JavaPlugin {
     private ReportManager reportManager;
     private BaseTracker baseTracker;
     private WebDashboard webDashboard;
+    private CombatTagManager combatTagManager;
+    private NoMansLandManager noMansLandManager;
     
     @Override
     public void onEnable() {
@@ -53,12 +60,22 @@ public final class PiCraftPlugin extends JavaPlugin {
         reportManager = new ReportManager(this);
         baseTracker = new BaseTracker(this);
         webDashboard = new WebDashboard(this);
+        combatTagManager = new CombatTagManager(this);
+        noMansLandManager = new NoMansLandManager(this);
         
         // Register commands
         registerCommands();
         
         // Register listeners
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
+        getServer().getPluginManager().registerEvents(combatTagManager, this);
+        getServer().getPluginManager().registerEvents(noMansLandManager, this);
+        getServer().getPluginManager().registerEvents(new CombatQuitPrevention(this), this);
+        
+        // Register chat filter
+        if (configManager.getConfig().getBoolean("chat_filter.enabled", true)) {
+            getServer().getPluginManager().registerEvents(new ChatFilter(this), this);
+        }
         
         // Register detection systems
         if (configManager != null && configManager.getConfig() != null) {
@@ -77,9 +94,6 @@ public final class PiCraftPlugin extends JavaPlugin {
             if (configManager.getConfig().getBoolean("reports.auto_detection.dragon_egg.enabled", true)) {
                 getServer().getPluginManager().registerEvents(new DragonEggTracker(this), this);
             }
-            if (configManager.getConfig().getBoolean("reports.auto_detection.weakness_potions.enabled", true)) {
-                getServer().getPluginManager().registerEvents(new WeaknessPotionDetector(this), this);
-            }
             if (configManager.getConfig().getBoolean("reports.auto_detection.villager_kills.enabled", true)) {
                 getServer().getPluginManager().registerEvents(new VillagerKillDetector(this), this);
             }
@@ -90,6 +104,9 @@ public final class PiCraftPlugin extends JavaPlugin {
         
         // Start web dashboard
         webDashboard.start();
+        
+        // Register custom recipes
+        NametagRecipe.registerRecipe(this);
         
         getLogger().info("PiCraft Plugin has been enabled!");
     }
@@ -126,8 +143,12 @@ public final class PiCraftPlugin extends JavaPlugin {
         if (getCommand("reportnotify") != null) getCommand("reportnotify").setExecutor(staffCommands);
         if (getCommand("reporttp") != null) getCommand("reporttp").setExecutor(staffCommands);
         if (getCommand("evidence") != null) getCommand("evidence").setExecutor(new EvidenceCommand(this));
+        
         if (getCommand("home") != null) getCommand("home").setExecutor(new HomeCommand(this));
+        if (getCommand("nomans") != null) getCommand("nomans").setExecutor(new NoMansCommand(this));
+        
         if (getCommand("spawn") != null) getCommand("spawn").setExecutor(new SpawnCommand(this));
+
     }
     
     private void createDefaultRulesFile() {
@@ -142,56 +163,134 @@ public final class PiCraftPlugin extends JavaPlugin {
                 }
                 
                 String defaultRules = """
-                    # Rules of the Server:
-                    
-                    ## Hard Enforced Rules:
-                    ### - No exploiting
-                    ### - No Duping
-                    ### - No Xray or Hacking
-                    ### - Be respectful and Family Friendly
-                    ### - Have fun!
-                    - Breaking these will result in a 3 day ban
-                    - If anyone finds dupe stashes IMMEDIATELY REPORT to <@1313691983126069289> or <@873986014937481346>, or any of the server mods!
-                    
-                    ## Soft Enforced Rules:
-                    ### - No Combat Logging
-                          ### - This includes randomly PvP-ing at spawn
-                    ### - Replay Mod/Flashback may not be used during gameplay or events to find traps and etc.
-                          ### - These mods may only be used after logging off after a session, and they may not be used for base hunting
-                    ### - No F3+A to reload chunks
-                    ### - All bases need to be built within a 2500 block radius of Spawn
-                    ### - No Stream Sniping (IDK if anyone actually streams)
-                    ### - No crazy ahh griefing (like destroying whole bases, taking a block or two or leaving a message is fine. you get the idea)
-                    ### - DO NOT steal more than 64x of any item from any player, you can steal upon a kill.
-                    ### - No Dragon Egg inside of Ender Chest
-                    ### - DO NOT abuse the seed to get an unfair advantage!
-                    ### - No Toxicity
-                    ### - No mass killing of pets
-                    ### - No killing of villagers
-                    
-                    ## Spawn Rules:
-                    ### - No crazy insane battles right at spawn.
-                    ### - No griefing at all
-                    ### - No bases right at spawn
-                    ### - Spawn is a 160 by 160 block radius from the spawn point/a decided location by everyone near the original spawn point
-                    
-                    ## Farm Rules:
-                    ### - No auto AFK raid farms
-                    ### - No auto AFK wither-skeleton farms
-                    
-                    ## Item Rules:
-                    ### - No Elytra (During Combat)
-                    ### - Only 2 netherite armour pieces and any netherite tools are allowed
-                    ### - Maximum of 8 End Crystals/Respawn Anchors, per fight
-                    ### - No Restocking of items while in combat with use of Shulkers/Ender-Chests/Chests
-                    ### - No weakness potions or arrows
-                    
-                    ## How to join:
-                    ### Name: PiCraft Season 2
-                    ### IP: 71.187.21.145
-                    ### Any Version
-                    
-                    ## Remember to always be friendly and HAVE FUN!
+                        🪓・SERVER RULES — PiCraft
+                        Welcome to the  PiCraft SMP — a chill server.
+                        
+                        🌎・CORE RULES
+                        Break = Punishment.
+                        🚫 No cheating, duping, or exploiting.
+                         No Xray, hacking clients, or bug abuse. Play legit or don’t play at all.
+                        🔒 No griefing or stealing — unless there’s a really, REALLY valid reason.
+                         (“They looked at my cow funny” is not valid, btw.)
+                        🧱 Pranks are fine — just not destructive or rage-inducing.
+                        💬 Be respectful and family-friendly.
+                        🎉 Play fair, have fun, don’t ruin it for others.
+                        🧾 Breaking these = 3-day ban minimum.
+                         If you find a dupe/exploit → report to <@PlayerRishi>, <@NorthPlace>, or a mod.
+                        
+                        😜・PRANKS & STEALING
+                        Pranks are allowed, but for the laughs — not arguments.
+                        🎁 Stealing is only allowed for harmless, funny pranks.
+                         You must return or replace all items within 24 hours.
+                        ⛔ No malicious or revenge stealing.
+                         If it feels like theft, it is theft. (no shi sherlock)
+                        🤝 Respect boundaries. If someone says “stop,” you stop.
+                         🐣 No pranking new players (under 3 days).
+                         🏗️ No pranks in public areas (Spawn, Hub, End) unless approved.
+                        ⚖️ Malicious stealing = normal theft = punishment.
+                        
+                        ⚔️・PVP & PRANK BATTLES
+                        PvP = fun, don’t be super sweaty or toxic.
+                        ⚔️ Must be mutual (as in the other person needs to agree) unless it’s clearly a prank.
+                        😂 Prank kills are okay — but give their stuff back. plz.
+                        💣 Fight Limits:
+                        Max 8 TNT Crystals/Anchors
+                        
+                        
+                        Max 3 Totems
+                        
+                        
+                        ❌ No weakness or harming!
+                        
+                        
+                        🧪 Potions only if both players agree
+                        
+                        
+                        💰 Fair kills: take some loot, not everything.
+                        🧍 Don’t target new or undergeared players.
+                        
+                        🏗️・BUILDS & COMMUNITY ZONES
+                        🚫 No griefing builds. Ever.
+                        🏙️ Protected Zones: Spawn, Nether Hub, End Island.
+                        ❌ No explosions, PvP, or major pranks here.
+                        🚧 No bases within 160 blocks of spawn.
+                        🧹 Keep community areas clean — no creeper craters or mess.
+                        
+                        🌾・FARMS & AUTOMATION
+                        🔌 Turn off redstone/farms when logging out.
+                        💀 No lag machines or infinite loops.
+                        🐄 Clear mobs before leaving farms.
+                        🧠 Follow admin/mod instructions if something crashes or lags the server.
+                        🌾Don’t use other people’s farms without their consent
+                        😴Any farms are fine, but just no afk farms.
+                        
+                        🥚・DRAGON EGG RULES
+                        📦 Don’t put it in an ender chest.
+                        ✅ If lost by accident = replaceable. (through events, quests, etc.)
+                        ❌ If lost on purpose = gone forever. (unless an admin approves another one being added)
+                        ⚔️ Don’t bring it to fights or pranks. (unless you wanna lose it…)
+                        
+                        📹・REPLAY MOD RULES
+                        🎥 Replay Mod SHOULD ONLY BE A CINEMATIC TOOL.
+                        ✅ Allowed for:
+                        Base tours
+                        
+                        
+                        Time-lapses
+                        
+                        
+                        Cinematic builds & edits
+                        
+                        
+                        🚫 NOT allowed for:
+                        Base hunting
+                        
+                        
+                        Structure finding
+                        
+                        
+                        Snooping on players
+                        
+                        
+                        Basically: make youtube vids, don’t create mischief.
+                        
+                        💬・COMMUNITY CONDUCT
+                        ❤️ Be kind, goofy, and cooperative.
+                         🤪 Funny kills/pranks are fine if everyone laughs.
+                         🐕 No pet or villager killing.
+                         📜 Don’t mess with books or signs.
+                         🧱 If a prank goes wrong — fix it. Don’t double down.
+                        
+                        🧑‍💼・ADMINS & MODS
+                        🛠️ Admins don’t use Creative Mode or unfair commands.
+                        🚀 Teleports only for moderation or mutual consent.
+                        📸 Bans need proof (screenshots or clips).
+                        ⚖️ Punishments must be fair and transparent.
+                        
+                        🧼・CHAT RULES
+                        💚 Keep chat chill and friendly.
+                        🚫 No spam, ragebait, or harassment.
+                        🤡 Be funny, not toxic.
+                        😅 Drama → take it private, not public.
+                        
+                        💀・No Man’s Land
+                        🫣 Dont hide there 24/7
+                        ⌨️ No hacking
+                        🤡 Be funny, not toxic.
+                        
+                        🌟・FINAL RULE
+                        If it makes the server less fun, don’t do it.
+                        If it’ll make everyone laugh, go for it — but clean up afterwards.
+                        And don’t create a toxic environment for anyone.
+                        
+                        TL;DR (Short Version)
+                        🚫 No griefing, dupes, or stealing (unless it’s harmless & funny).
+                        🤝 Respect players + builds.
+                        🎥 Replay Mod = cinematics only.
+                        ⚔️ PvP = fair and mutual.
+                        🧱 No base hunting or destruction.
+                        ❤️ Be funny, kind, and chill.
+                        💀 If it ruins fun → don’t. If it’s hilarious → yes.
                     """;
 
                 
@@ -219,5 +318,13 @@ public final class PiCraftPlugin extends JavaPlugin {
     
     public BaseTracker getBaseTracker() {
         return baseTracker;
+    }
+    
+    public CombatTagManager getCombatTagManager() {
+        return combatTagManager;
+    }
+    
+    public NoMansLandManager getNoMansLandManager() {
+        return noMansLandManager;
     }
 }

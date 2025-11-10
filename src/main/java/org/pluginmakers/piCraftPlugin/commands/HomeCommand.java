@@ -1,6 +1,8 @@
 package org.pluginmakers.piCraftPlugin.commands;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -24,24 +26,42 @@ public class HomeCommand implements CommandExecutor {
         }
         
         Player player = (Player) sender;
-        Location bedLocation = player.getBedSpawnLocation();
+        
+        if (args.length == 0) {
+            // Player using /home
+            if (plugin.getCombatTagManager().isInCombat(player)) {
+                int timeLeft = plugin.getCombatTagManager().getRemainingCombatTime(player);
+                player.sendMessage(ColorUtil.colorize("&cYou cannot use /home while in combat! Wait " + timeLeft + " seconds."));
+                return true;
+            }
+            
+            Location bedLocation = player.getBedSpawnLocation();
+            if (bedLocation == null) {
+                player.sendMessage(ColorUtil.colorize("&cYou have not set a respawn point. Sleep in a bed first!"));
+                return true;
+            }
+            
+            player.teleport(bedLocation);
+            player.sendMessage(ColorUtil.colorize("&aTeleported to your spawn point!"));
+            return true;
+        }
+        
+        // Admin using /home <player>
+        if (!player.hasPermission("picraft.home.admin")) {
+            player.sendMessage(ColorUtil.colorize("&cNo permission."));
+            return true;
+        }
+        
+        OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
+        Location bedLocation = target.getBedSpawnLocation();
         
         if (bedLocation == null) {
-            player.sendMessage(ColorUtil.colorize("&cYou have not set a respawn point. Sleep in a bed first!"));
+            player.sendMessage(ColorUtil.colorize("&c" + target.getName() + " has no bed spawn set."));
             return true;
         }
         
-        // Check if bed still exists
-        if (!bedLocation.getBlock().getType().name().contains("BED")) {
-            player.sendMessage(ColorUtil.colorize("&cYour bed has been destroyed! Set a new respawn point."));
-            return true;
-        }
-        
-        // Teleport to bed location (slightly above to avoid suffocation)
-        Location teleportLocation = bedLocation.clone().add(0, 1, 0);
-        player.teleport(teleportLocation);
-        player.sendMessage(ColorUtil.colorize("&aTeleported to your bed!"));
-        
+        player.teleport(bedLocation);
+        player.sendMessage(ColorUtil.colorize("&aTeleported to " + target.getName() + "'s bed spawn!"));
         return true;
     }
 }

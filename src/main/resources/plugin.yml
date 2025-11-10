@@ -64,14 +64,19 @@ commands:
     permission: picraft.report.evidence
   
   home:
-    description: Teleport to your bed spawn location
-    usage: /home
+    description: Teleport to your bed spawn or another player's bed spawn (admin)
+    usage: /home [player]
     permission: picraft.home
   
   spawn:
     description: Teleport to server spawn
     usage: /spawn
     permission: picraft.spawn
+  
+  nomans:
+    description: Set No Man's Land area corners
+    usage: /nomans <corner1|corner2>
+    permission: picraft.nomans.admin
 
 permissions:
   picraft.rules:
@@ -127,12 +132,20 @@ permissions:
     default: op
   
   picraft.home:
-    description: Use /home command
+    description: Use home commands
     default: true
+  
+  picraft.home.admin:
+    description: View and teleport to other players' homes
+    default: op
   
   picraft.spawn:
     description: Use /spawn command
     default: true
+  
+  picraft.nomans.admin:
+    description: Set No Man's Land areas
+    default: op
   
   picraft.*:
     description: All PiCraft permissions
@@ -152,4 +165,7 @@ permissions:
       picraft.report.view.realname: true
       picraft.report.evidence: true
       picraft.home: true
+      picraft.home.admin: true
       picraft.spawn: true
+      picraft.nomans.admin: true
+

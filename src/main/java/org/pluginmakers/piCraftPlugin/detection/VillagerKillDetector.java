@@ -47,16 +47,12 @@ public class VillagerKillDetector implements Listener {
                 "SYSTEM",
                 false,
                 "other",
-                String.format("Player %s killed a villager (%s) at %s %d %d %d", 
-                    killer.getName(), profession,
-                    killer.getWorld().getName(),
-                    killer.getLocation().getBlockX(),
-                    killer.getLocation().getBlockY(),
-                    killer.getLocation().getBlockZ()),
-                killer.getWorld().getName(),
-                killer.getLocation().getBlockX(),
-                killer.getLocation().getBlockY(),
-                killer.getLocation().getBlockZ()
+                String.format("Player %s killed a villager (%s)", 
+                    killer.getName(), profession),
+                villager.getWorld().getName(),
+                villager.getLocation().getBlockX(),
+                villager.getLocation().getBlockY(),
+                villager.getLocation().getBlockZ()
             );
             
             report.setAutoDetected(true);

@@ -24,6 +24,14 @@ public class SpawnCommand implements CommandExecutor {
         }
         
         Player player = (Player) sender;
+        
+        // Check if player is in combat
+        if (plugin.getCombatTagManager().isInCombat(player)) {
+            int timeLeft = plugin.getCombatTagManager().getRemainingCombatTime(player);
+            player.sendMessage(ColorUtil.colorize("&cYou cannot use /spawn while in combat! Wait " + timeLeft + " seconds."));
+            return true;
+        }
+        
         Location spawnLocation = player.getWorld().getSpawnLocation();
         
         player.teleport(spawnLocation);

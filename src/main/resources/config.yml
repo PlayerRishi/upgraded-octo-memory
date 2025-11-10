@@ -72,13 +72,22 @@ reports:
       enabled: true
       monitor_ender_chest: true # Alert if dragon egg placed in ender chest
       auto_report: true       # Auto-create reports for violations
-    weakness_potions:
-      enabled: true
-      monitor_usage: true     # Alert on weakness potion/arrow usage
-      auto_report: true       # Auto-create reports for violations
     villager_kills:
       enabled: true
       auto_report: true       # Auto-create reports for villager kills
+
+chat_filter:
+  enabled: true
+  first_offense_words:    # Most offensive - 3 hour ban
+    - "BadWord1"
+  second_offense_words:   # Moderately offensive - 10 minute timeout
+    - "BadWord1"
+  third_offense_words:    # Least offensive - kick only
+    - "BadWord1"
+  messages:
+    first_offense: "&c&lBANNED! &7You have been banned for 3 hours for using extremely inappropriate language. This behavior is not tolerated on PiCraft."
+    second_offense: "&e&lMUTED! &7You have been muted for 10 minutes for inappropriate language. You cannot chat until the mute expires."
+    third_offense: "&6&lKICKED! &7Please keep chat family-friendly. Continued violations may result in longer punishments."
 
 messages:
   prefix: "&6[PiCraft]&r "
