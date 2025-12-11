@@ -1,0 +1,46 @@
+# ========================================
+#            PICRAFT MOTD ROTATION
+# ========================================
+# 
+# This file contains multiple MOTDs that will rotate
+# Rotation modes: daily, random, sequential
+# Use & for color codes (e.g., &a = green, &c = red)
+#
+# Variables available:
+# {players} - Current online players
+# {max} - Max players
+# {version} - Server version
+#
+
+motds:
+  - |
+    §6§l🌟PICRAFT SMP §8| §eS2 §8| §7{players}/{max}
+    §b⚡ Vanilla+ §8• §aSEASON 3 §8• §dChill Vibes
+  
+  - |
+    §a§l🎮PICRAFT §8| §6Season 2 §8| §7{players}/{max}
+    §e🔥END IS OPEN §8• §bNo Grief §8• §dChill Community
+  
+  - |
+    §d§l💎PICRAFT SMP §8| §cLive Now §8| §7{players}/{max}
+    §6⭐Survival §8• §aMods Allowed! §8• §bJoin Today!
+  
+  - |
+    §c§l🚀PICRAFT §8| §e§2{version} §8| §7{players}/{max}
+    §a🌱New Season!! §8• §bVanilla+ §8• §dCome Play!
+  
+  - |
+    §b§l⚡ PICRAFT SMP §8| §6Active §8| §7{players}/{max}
+    §e🎯No Hacks §8• §dUnhinged Players may exist
+  
+  - |
+    §e&l🏆 PICRAFT §8| §aBest SMP §8| §7{players}/{max}
+    §6✨8GB of ram §8• §bGreat Staff:D §8• §dWE HAVE DISCORD!
+  
+  - |
+    §9§l🌊 PICRAFT SMP §8| §dS2 §8| §7{players}/{max}
+    §a🎮Pure Survival §8• §e30+ whitelisted §8• &bPlay Now!
+  
+  - |
+    §5§l🎪 PICRAFT §8| §6Season Two §8| §7{players}/{max}
+    §c🔥Fresh World §8• §aWe don't log your IP!
