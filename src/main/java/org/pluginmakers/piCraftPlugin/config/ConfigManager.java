@@ -114,4 +114,14 @@ public class ConfigManager {
     public String getWebDashboardAuthKey() {
         return config.getString("web_dashboard.auth_key", "change-me");
     }
+    
+    // Mod check settings
+    public boolean isModCheckEnabled() {
+        return config.getBoolean("mod_check.enabled", true);
+    }
+    
+    public void setModCheckEnabled(boolean enabled) {
+        config.set("mod_check.enabled", enabled);
+        plugin.saveConfig();
+    }
 }

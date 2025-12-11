@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "picraftmod",
+  "version": "${version}",
+
+  "name": "PiCraftMod",
+  "description": "Required mod for PiCraft server - provides server integration and features",
+  "authors": ["PlayerRishi"],
+  "contact": {},
+
+  "license": "All-Rights-Reserved",
+  "icon": "assets/picraftmod/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "fabric-datagen": ["rishi.player.picraftmod.client.PicraftmodDataGenerator"],
+    "client": ["rishi.player.picraftmod.client.PicraftmodClient"],
+    "main": ["rishi.player.picraftmod.Picraftmod"]
+  },
+
+  "mixins": [
+    "picraftmod.mixins.json"
+    ,{
+      "config": "picraftmod.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "fabric": "*",
+    "minecraft": ">=1.20.0"
+  }
+}

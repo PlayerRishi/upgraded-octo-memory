@@ -35,6 +35,14 @@ public class VillagerKillDetector implements Listener {
         }
         Villager villager = (Villager) event.getEntity();
         
+        // Only report if villager has a job (not NONE or NITWIT)
+        if (plugin.getConfigManager().getConfig().getBoolean("reports.auto_detection.villager_kills.job_only", true)) {
+            if (villager.getProfession() == Villager.Profession.NONE || 
+                villager.getProfession() == Villager.Profession.NITWIT) {
+                return;
+            }
+        }
+        
         createVillagerKillReport(killer, villager);
     }
     

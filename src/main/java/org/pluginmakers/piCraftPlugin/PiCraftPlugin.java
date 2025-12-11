@@ -1,14 +1,19 @@
 package org.pluginmakers.piCraftPlugin;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.pluginmakers.piCraftPlugin.commands.BypassCommand;
 import org.pluginmakers.piCraftPlugin.commands.EvidenceCommand;
 import org.pluginmakers.piCraftPlugin.commands.HomeCommand;
+import org.pluginmakers.piCraftPlugin.commands.ModCheckCommand;
 import org.pluginmakers.piCraftPlugin.commands.NoMansCommand;
 import org.pluginmakers.piCraftPlugin.commands.ReportCommand;
 import org.pluginmakers.piCraftPlugin.commands.ReportTabCompleter;
 import org.pluginmakers.piCraftPlugin.commands.RulesCommand;
 import org.pluginmakers.piCraftPlugin.commands.SpawnCommand;
 import org.pluginmakers.piCraftPlugin.commands.StaffCommands;
+import org.pluginmakers.piCraftPlugin.commands.SusCommand;
+import org.pluginmakers.piCraftPlugin.commands.WithdrawCommand;
+import org.pluginmakers.piCraftPlugin.commands.HeartWithdrawCommand;
 import org.pluginmakers.piCraftPlugin.config.ConfigManager;
 import org.pluginmakers.piCraftPlugin.database.DatabaseManager;
 import org.pluginmakers.piCraftPlugin.detection.BaseRadiusEnforcer;
@@ -17,14 +22,22 @@ import org.pluginmakers.piCraftPlugin.detection.DragonEggTracker;
 import org.pluginmakers.piCraftPlugin.detection.ReplayModDetector;
 import org.pluginmakers.piCraftPlugin.detection.SeedAbuseDetector;
 import org.pluginmakers.piCraftPlugin.detection.VillagerKillDetector;
+import org.pluginmakers.piCraftPlugin.detection.PetDeathDetector;
+import org.pluginmakers.piCraftPlugin.detection.OreTracker;
 import org.pluginmakers.piCraftPlugin.listeners.ChatFilter;
 import org.pluginmakers.piCraftPlugin.listeners.CombatQuitPrevention;
+import org.pluginmakers.piCraftPlugin.listeners.ModListListener;
 import org.pluginmakers.piCraftPlugin.listeners.PlayerJoinListener;
+import org.pluginmakers.piCraftPlugin.listeners.GhastFireballPrevention;
 import org.pluginmakers.piCraftPlugin.managers.BaseTracker;
 import org.pluginmakers.piCraftPlugin.managers.CombatTagManager;
+import org.pluginmakers.piCraftPlugin.managers.ModManager;
 import org.pluginmakers.piCraftPlugin.managers.NoMansLandManager;
 import org.pluginmakers.piCraftPlugin.managers.ReportManager;
-import org.pluginmakers.piCraftPlugin.recipes.NametagRecipe;
+import org.pluginmakers.piCraftPlugin.managers.MOTDManager;
+import org.pluginmakers.piCraftPlugin.managers.LifestealManager;
+import org.pluginmakers.piCraftPlugin.utils.ReportLogger;
+import org.pluginmakers.piCraftPlugin.recipes.Recipes;
 import org.pluginmakers.piCraftPlugin.web.WebDashboard;
 
 import java.io.File;
@@ -40,6 +53,10 @@ public final class PiCraftPlugin extends JavaPlugin {
     private WebDashboard webDashboard;
     private CombatTagManager combatTagManager;
     private NoMansLandManager noMansLandManager;
+    private ModManager modManager;
+    private ModListListener modListListener;
+    private MOTDManager motdManager;
+    private LifestealManager lifestealManager;
     
     @Override
     public void onEnable() {
@@ -50,6 +67,7 @@ public final class PiCraftPlugin extends JavaPlugin {
         databaseManager = new DatabaseManager(getDataFolder());
         try {
             databaseManager.initialize();
+            databaseManager.setReportLogger(new ReportLogger(this));
         } catch (SQLException e) {
             getLogger().severe("Failed to initialize database: " + e.getMessage());
             getServer().getPluginManager().disablePlugin(this);
@@ -62,6 +80,10 @@ public final class PiCraftPlugin extends JavaPlugin {
         webDashboard = new WebDashboard(this);
         combatTagManager = new CombatTagManager(this);
         noMansLandManager = new NoMansLandManager(this);
+        modManager = new ModManager(this);
+        modListListener = new ModListListener(this);
+        motdManager = new MOTDManager(this);
+        lifestealManager = new LifestealManager(this);
         
         // Register commands
         registerCommands();
@@ -70,7 +92,15 @@ public final class PiCraftPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new PlayerJoinListener(this), this);
         getServer().getPluginManager().registerEvents(combatTagManager, this);
         getServer().getPluginManager().registerEvents(noMansLandManager, this);
+        getServer().getPluginManager().registerEvents(modManager, this);
+        getServer().getPluginManager().registerEvents(modListListener, this);
+        getServer().getPluginManager().registerEvents(motdManager, this);
+        getServer().getPluginManager().registerEvents(lifestealManager, this);
         getServer().getPluginManager().registerEvents(new CombatQuitPrevention(this), this);
+        getServer().getPluginManager().registerEvents(new GhastFireballPrevention(this), this);
+        
+        // Register plugin messaging channel
+        getServer().getMessenger().registerIncomingPluginChannel(this, "picraft:mod_list", modListListener);
         
         // Register chat filter
         if (configManager.getConfig().getBoolean("chat_filter.enabled", true)) {
@@ -82,12 +112,7 @@ public final class PiCraftPlugin extends JavaPlugin {
             if (configManager.getConfig().getBoolean("reports.auto_detection.combat_logging.enabled", true)) {
                 getServer().getPluginManager().registerEvents(new CombatLogDetector(this), this);
             }
-            if (configManager.getConfig().getBoolean("reports.auto_detection.seed_abuse.enabled", true)) {
-                getServer().getPluginManager().registerEvents(new SeedAbuseDetector(this), this);
-            }
-            if (configManager.getConfig().getBoolean("reports.base_tracking.enforce_radius", true)) {
-                getServer().getPluginManager().registerEvents(new BaseRadiusEnforcer(this), this);
-            }
+
             if (configManager.getConfig().getBoolean("reports.auto_detection.replay_mod.enabled", true)) {
                 getServer().getPluginManager().registerEvents(new ReplayModDetector(this), this);
             }
@@ -96,6 +121,12 @@ public final class PiCraftPlugin extends JavaPlugin {
             }
             if (configManager.getConfig().getBoolean("reports.auto_detection.villager_kills.enabled", true)) {
                 getServer().getPluginManager().registerEvents(new VillagerKillDetector(this), this);
+            }
+            if (configManager.getConfig().getBoolean("reports.auto_detection.pet_deaths.enabled", true)) {
+                getServer().getPluginManager().registerEvents(new PetDeathDetector(this), this);
+            }
+            if (configManager.getConfig().getBoolean("ore_tracking.enabled", true)) {
+                getServer().getPluginManager().registerEvents(new OreTracker(this), this);
             }
         }
         
@@ -106,7 +137,7 @@ public final class PiCraftPlugin extends JavaPlugin {
         webDashboard.start();
         
         // Register custom recipes
-        NametagRecipe.registerRecipe(this);
+        Recipes.registerRecipe(this);
         
         getLogger().info("PiCraft Plugin has been enabled!");
     }
@@ -146,8 +177,13 @@ public final class PiCraftPlugin extends JavaPlugin {
         
         if (getCommand("home") != null) getCommand("home").setExecutor(new HomeCommand(this));
         if (getCommand("nomans") != null) getCommand("nomans").setExecutor(new NoMansCommand(this));
+        if (getCommand("modcheck") != null) getCommand("modcheck").setExecutor(new ModCheckCommand(this));
+        if (getCommand("modtoggle") != null) getCommand("modtoggle").setExecutor(new BypassCommand(this));
         
         if (getCommand("spawn") != null) getCommand("spawn").setExecutor(new SpawnCommand(this));
+        if (getCommand("sus") != null) getCommand("sus").setExecutor(new SusCommand(this));
+        if (getCommand("withdraw") != null) getCommand("withdraw").setExecutor(new WithdrawCommand(this));
+        if (getCommand("heartwithdraw") != null) getCommand("heartwithdraw").setExecutor(new HeartWithdrawCommand(this));
 
     }
     
@@ -326,5 +362,17 @@ public final class PiCraftPlugin extends JavaPlugin {
     
     public NoMansLandManager getNoMansLandManager() {
         return noMansLandManager;
+    }
+    
+    public ModManager getModManager() {
+        return modManager;
+    }
+    
+    public ModListListener getModListListener() {
+        return modListListener;
+    }
+    
+    public LifestealManager getLifestealManager() {
+        return lifestealManager;
     }
 }

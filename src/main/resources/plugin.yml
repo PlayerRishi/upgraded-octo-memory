@@ -64,8 +64,8 @@ commands:
     permission: picraft.report.evidence
   
   home:
-    description: Teleport to your bed spawn or another player's bed spawn (admin)
-    usage: /home [player]
+    description: Teleport to your bed spawn
+    usage: /home
     permission: picraft.home
   
   spawn:
@@ -77,6 +77,31 @@ commands:
     description: Set No Man's Land area corners
     usage: /nomans <corner1|corner2>
     permission: picraft.nomans.admin
+  
+  modcheck:
+    description: Check player mods and resource packs
+    usage: /modcheck [player]
+    permission: picraft.modcheck
+  
+  modtoggle:
+    description: Enable or disable mod checking
+    usage: /modtoggle <on|off>
+    permission: picraft.modcheck.admin
+  
+  sus:
+    description: View player mining statistics and heatmap
+    usage: /sus <player>
+    permission: picraft.sus
+  
+  withdraw:
+    description: Withdraw XP bottles from your levels
+    usage: /withdraw <amount>
+    permission: picraft.withdraw
+  
+  heartwithdraw:
+    description: Withdraw a heart from your health
+    usage: /heartwithdraw
+    permission: picraft.heartwithdraw
 
 permissions:
   picraft.rules:
@@ -135,9 +160,7 @@ permissions:
     description: Use home commands
     default: true
   
-  picraft.home.admin:
-    description: View and teleport to other players' homes
-    default: op
+
   
   picraft.spawn:
     description: Use /spawn command
@@ -146,6 +169,30 @@ permissions:
   picraft.nomans.admin:
     description: Set No Man's Land areas
     default: op
+  
+  picraft.modcheck:
+    description: Check player mods and resource packs
+    default: op
+  
+  picraft.modcheck.bypass:
+    description: Bypass mod requirement check
+    default: false
+  
+  picraft.modcheck.admin:
+    description: Give players mod check bypass
+    default: op
+  
+  picraft.sus:
+    description: View player mining statistics
+    default: op
+  
+  picraft.withdraw:
+    description: Withdraw XP bottles from levels
+    default: true
+  
+  picraft.heartwithdraw:
+    description: Withdraw hearts from health
+    default: true
   
   picraft.*:
     description: All PiCraft permissions
@@ -165,7 +212,13 @@ permissions:
       picraft.report.view.realname: true
       picraft.report.evidence: true
       picraft.home: true
-      picraft.home.admin: true
+
       picraft.spawn: true
       picraft.nomans.admin: true
+      picraft.modcheck: true
+      picraft.modcheck.bypass: true
+      picraft.modcheck.admin: true
+      picraft.sus: true
+      picraft.withdraw: true
+      picraft.heartwithdraw: true
 

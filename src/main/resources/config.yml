@@ -1,42 +1,63 @@
+# ========================================
+#           PICRAFT PLUGIN CONFIG
+# ========================================
+
+# Database Configuration
 storage:
-  type: sqlite      # sqlite | yaml
+  type: sqlite                # sqlite | yaml
 
+# Command Cooldowns (seconds)
 cooldowns:
-  report: 30        # seconds between reports
+  report: 30                  # Time between reports
 
+# Staff Notifications
 notifications:
-  on_staff_join: true
-  unread_count: true
+  on_staff_join: true         # Notify staff of unread reports on join
+  unread_count: true          # Show unread count in notifications
 
+# Discord Integration (requires DiscordSRV)
 discord:
-  enabled: false             # requires DiscordSRV
+  enabled: false
   smart_notifications:
     enabled: true
-    channels:
-      grief: ""              # Channel ID for grief reports
-      hack: ""               # Channel ID for hack reports
-      combat: ""             # Channel ID for combat reports
-      general: ""            # Fallback channel for other reports
-    roles:
-      grief: ""              # Role ID to ping for grief
-      hack: ""               # Role ID to ping for hacks
-      combat: ""             # Role ID to ping for combat
-      urgent: ""             # Role ID for urgent/auto-detected reports
+    channels:                 # Discord channel IDs for different report types
+      grief: ""
+      hack: ""
+      combat: ""
+      general: ""             # Fallback channel
+    roles:                    # Discord role IDs to ping
+      grief: ""
+      hack: ""
+      combat: ""
+      urgent: ""              # Auto-detection alerts
   message: "**New report #{id}** by {displayReporter} [{category}] at {world} {x} {y} {z}\n{message}"
-  
+
+# Web Dashboard
 web_dashboard:
   enabled: false
   port: 8080
   host: "localhost"
-  auth_key: "your-secret-key"  # Change this for security
+  auth_key: "your-secret-key" # CHANGE THIS!
 
+# Server Rules
 rules:
-  file: "rules.txt"         # located in plugins/PiCraftPlugin/
+  file: "rules.txt"           # File location: plugins/PiCraftPlugin/rules.txt
   pagination:
     enabled: false
     lines_per_page: 12
 
+# MOTD Rotation
+motd:
+  enabled: true
+  file: "motd.yml"            # File location: plugins/PiCraftPlugin/motd.yml
+  rotation: "daily"           # daily | random | sequential
+
+# ========================================
+#              REPORT SYSTEM
+# ========================================
+
 reports:
+  # Available report categories
   categories:
     - "grief"
     - "steal"
@@ -46,64 +67,178 @@ reports:
     - "exploit"
     - "spam"
     - "other"
+  
+  # Base Location Tracking
   base_tracking:
     enabled: true
-    radius_limit: 2500        # Alert if report is outside spawn radius
-    log_coordinates: true     # Log all report coordinates for base tracking
-    enforce_radius: true      # Auto-report players building outside radius
+    radius_limit: 2500        # Alert if report outside spawn radius
+    log_coordinates: true     # Log coordinates for pattern analysis
+    enforce_radius: false     # Auto-report radius violations (DISABLED)
+  
+  # Evidence Attachments
   evidence:
     enabled: true
     max_attachments: 5        # Max evidence links per report
+  
+  # Report Logging
+  logging:
+    enabled: true
+    file: "reports.log"        # Log file location: plugins/PiCraftPlugin/reports.log
+    format: "[{timestamp}] #{id} {reporter} -> {category}: {message} at {world} {x},{y},{z}"
+    log_auto_detected: true   # Log auto-detected reports
+  
+  # Automatic Detection Systems
   auto_detection:
+    # Combat Logging Detection
     combat_logging:
       enabled: true
-      combat_time: 15         # Seconds in combat before logout = combat log
-      auto_report: true       # Auto-create reports for combat loggers
-    seed_abuse:
-      enabled: true
-      structure_limit: 5      # Max structures found per hour before flagging
-      diamond_limit: 128      # Max diamonds mined per hour before flagging
-      auto_report: true       # Auto-create reports for suspected seed abuse
+      combat_time: 15         # Seconds before logout = combat log
+      auto_report: true
+    
+
+    
+    # Replay Mod Detection
     replay_mod:
       enabled: true
-      chunk_reload_limit: 5   # Max F3+A uses per minute before flagging
-      auto_report: true       # Auto-create reports for suspected replay mod usage
+      chunk_reload_limit: 5   # Max F3+A uses/minute before flagging
+      auto_report: true
+    
+    # Dragon Egg Protection
     dragon_egg:
       enabled: true
-      monitor_ender_chest: true # Alert if dragon egg placed in ender chest
-      auto_report: true       # Auto-create reports for violations
+      monitor_ender_chest: true
+      auto_report: true
+    
+    # Villager Kill Detection
     villager_kills:
       enabled: true
-      auto_report: true       # Auto-create reports for villager kills
+      auto_report: true
+      job_only: true          # Only report villagers with jobs
+    
+    # Pet Death Detection
+    pet_deaths:
+      enabled: true
+      auto_report: true
+      exclude_owner: true     # Don't report owner kills own pet
 
+# ========================================
+#           PLAYER MANAGEMENT
+# ========================================
+
+# Mod Requirement System
+mod_check:
+  enabled: true
+  skip_ops: true              # Skip check for operators
+  required_mods:
+    - "picraft"               # Required mod names
+  kick_message: "&cYou must install the PiCraft mod to play on this server!\n&eDownload: &fhttps://github.com/YourRepo/PiCraftMod"
+
+# Chat Filter
 chat_filter:
   enabled: true
-  first_offense_words:    # Most offensive - 3 hour ban
-    - "BadWord1"
-  second_offense_words:   # Moderately offensive - 10 minute timeout
-    - "BadWord1"
-  third_offense_words:    # Least offensive - kick only
-    - "BadWord1"
-  messages:
-    first_offense: "&c&lBANNED! &7You have been banned for 3 hours for using extremely inappropriate language. This behavior is not tolerated on PiCraft."
-    second_offense: "&e&lMUTED! &7You have been muted for 10 minutes for inappropriate language. You cannot chat until the mute expires."
-    third_offense: "&6&lKICKED! &7Please keep chat family-friendly. Continued violations may result in longer punishments."
+  blacklisted_words:
+    - "fuck"
+    - "nigger"
+    - "bitch"
+    - "dick"
+    - "dih"
+    - "bih"
+    - ""
+  message: "&cThe word in your message is blacklisted."
+
+# ========================================
+#           WORLD SETTINGS
+# ========================================
+
+# Lifesteal System
+lifesteal:
+  enabled: true
+  min_hearts: 5               # Minimum hearts (10 HP)
+  max_hearts: 20              # Maximum hearts (40 HP)
+  default_hearts: 10          # Starting hearts (20 HP)
+  drop_on_death: true         # Drop heart on death
+  steal_on_kill: true         # Steal heart on kill
+
+# Command Configuration
+commands:
+  home:
+    enabled: true             # Enable /home command
+  spawn:
+    enabled: true             # Enable /spawn command
+    nether_disabled: true     # Disable /spawn in Nether
+    end_fountain_coords:      # End fountain location
+      x: 0
+      y: 64
+      z: 0
+
+# Ore Mining Tracking
+ore_tracking:
+  enabled: true
+  data_retention_days: 30     # Keep data for 30 days
+  track_ores:
+    # Overworld Ores
+    - "DIAMOND_ORE"
+    - "DEEPSLATE_DIAMOND_ORE"
+    - "EMERALD_ORE"
+    - "DEEPSLATE_EMERALD_ORE"
+    - "GOLD_ORE"
+    - "DEEPSLATE_GOLD_ORE"
+    - "IRON_ORE"
+    - "DEEPSLATE_IRON_ORE"
+    - "COAL_ORE"
+    - "DEEPSLATE_COAL_ORE"
+    - "COPPER_ORE"
+    - "DEEPSLATE_COPPER_ORE"
+    - "LAPIS_ORE"
+    - "DEEPSLATE_LAPIS_ORE"
+    - "REDSTONE_ORE"
+    - "DEEPSLATE_REDSTONE_ORE"
+    # Nether Ores
+    - "ANCIENT_DEBRIS"
+    - "NETHER_GOLD_ORE"
+    - "NETHER_QUARTZ_ORE"
+
+# ========================================
+#              MESSAGES
+# ========================================
 
 messages:
   prefix: "&6[PiCraft]&r "
+  
+  # Report Messages
   report_submitted: "&aYour report has been submitted. Staff will review it soon."
   report_submitted_anon: "&aYour anonymous report has been submitted."
   report_cooldown: "&cYou must wait {time}s before submitting another report."
   staff_notify: "&eThere are &6{count}&e new reports. Use &6/reports&e."
+  
+  # General Messages
   no_permission: "&cYou do not have permission."
   not_found: "&cReport not found."
+  
+  # Staff Actions
   viewed: "&aMarked report #{id} as read."
   cleared: "&aClosed report #{id}."
   assigned: "&aAssigned report #{id} to {staff}."
   notify_on: "&aReport notifications: &2ON"
   notify_off: "&aReport notifications: &cOFF"
   teleported: "&aTeleported to report #{id} location."
+  
+  # System Messages
   rules_not_found: "&cRules file not found. Please contact an administrator."
   invalid_category: "&cInvalid category. Use: {categories}"
   category_required: "&cCategory is required. Available: {categories}"
   reports_renumbered: "&eReports have been renumbered to fill gaps."
+  
+  # Spawn Messages
+  spawn_nether_disabled: "&c/spawn is disabled in the Nether!"
+  spawn_teleported: "&aTeleported to spawn!"
+  spawn_fountain: "&aTeleported to the fountain!"
+  
+  # Lifesteal Messages
+  heart_gained: "&c❤ &aYou gained a heart! ({hearts}/20)"
+  heart_lost: "&c❤ &cYou lost a heart! ({hearts}/20)"
+  heart_used: "&c❤ &aYou used a heart! ({hearts}/20)"
+  heart_withdrawn: "&c❤ &aWithdrew a heart! ({hearts}/20)"
+  heart_max: "&cYou already have maximum hearts!"
+  heart_min: "&cYou cannot lose more hearts!"
+  heart_no_withdraw: "&cYou don't have enough hearts to withdraw!"

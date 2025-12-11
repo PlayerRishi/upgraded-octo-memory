@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "rishi.player.picraftmod.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "picraftmod.refmap.json",
+  "mixins": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

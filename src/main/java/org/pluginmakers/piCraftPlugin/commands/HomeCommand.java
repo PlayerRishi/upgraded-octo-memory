@@ -20,6 +20,11 @@ public class HomeCommand implements CommandExecutor {
     
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (!plugin.getConfig().getBoolean("commands.home.enabled", true)) {
+            sender.sendMessage(ColorUtil.colorize("&cThis command is disabled."));
+            return true;
+        }
+        
         if (!(sender instanceof Player)) {
             sender.sendMessage(ColorUtil.colorize("&cOnly players can use this command."));
             return true;
@@ -27,41 +32,26 @@ public class HomeCommand implements CommandExecutor {
         
         Player player = (Player) sender;
         
-        if (args.length == 0) {
-            // Player using /home
-            if (plugin.getCombatTagManager().isInCombat(player)) {
-                int timeLeft = plugin.getCombatTagManager().getRemainingCombatTime(player);
-                player.sendMessage(ColorUtil.colorize("&cYou cannot use /home while in combat! Wait " + timeLeft + " seconds."));
-                return true;
-            }
-            
-            Location bedLocation = player.getBedSpawnLocation();
-            if (bedLocation == null) {
-                player.sendMessage(ColorUtil.colorize("&cYou have not set a respawn point. Sleep in a bed first!"));
-                return true;
-            }
-            
-            player.teleport(bedLocation);
-            player.sendMessage(ColorUtil.colorize("&aTeleported to your spawn point!"));
+        if (args.length > 0) {
+            player.sendMessage(ColorUtil.colorize("&cUsage: /home"));
             return true;
         }
         
-        // Admin using /home <player>
-        if (!player.hasPermission("picraft.home.admin")) {
-            player.sendMessage(ColorUtil.colorize("&cNo permission."));
+        // Player using /home
+        if (plugin.getCombatTagManager().isInCombat(player)) {
+            int timeLeft = plugin.getCombatTagManager().getRemainingCombatTime(player);
+            player.sendMessage(ColorUtil.colorize("&cYou cannot use /home while in combat! Wait " + timeLeft + " seconds."));
             return true;
         }
         
-        OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
-        Location bedLocation = target.getBedSpawnLocation();
-        
+        Location bedLocation = player.getBedSpawnLocation();
         if (bedLocation == null) {
-            player.sendMessage(ColorUtil.colorize("&c" + target.getName() + " has no bed spawn set."));
+            player.sendMessage(ColorUtil.colorize("&cYou have not set a respawn point. Sleep in a bed first!"));
             return true;
         }
         
         player.teleport(bedLocation);
-        player.sendMessage(ColorUtil.colorize("&aTeleported to " + target.getName() + "'s bed spawn!"));
+        player.sendMessage(ColorUtil.colorize("&aTeleported to your spawn point!"));
         return true;
     }
 }

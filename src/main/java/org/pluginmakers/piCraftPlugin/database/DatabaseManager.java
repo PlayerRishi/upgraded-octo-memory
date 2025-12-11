@@ -1,6 +1,7 @@
 package org.pluginmakers.piCraftPlugin.database;
 
 import org.pluginmakers.piCraftPlugin.model.Report;
+import org.pluginmakers.piCraftPlugin.utils.ReportLogger;
 import java.io.File;
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -11,9 +12,14 @@ import java.util.UUID;
 public class DatabaseManager {
     private Connection connection;
     private final File dataFolder;
+    private ReportLogger reportLogger;
     
     public DatabaseManager(File dataFolder) {
         this.dataFolder = dataFolder;
+    }
+    
+    public void setReportLogger(ReportLogger reportLogger) {
+        this.reportLogger = reportLogger;
     }
     
     public void initialize() throws SQLException {
@@ -55,10 +61,23 @@ public class DatabaseManager {
                          "mute_until INTEGER NOT NULL" +
                          ")";
         
+        String oreTrackingSql = "CREATE TABLE IF NOT EXISTS ore_mining (" +
+                               "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                               "player_uuid TEXT NOT NULL," +
+                               "player_name TEXT NOT NULL," +
+                               "ore_type TEXT NOT NULL," +
+                               "world TEXT NOT NULL," +
+                               "x INTEGER NOT NULL," +
+                               "y INTEGER NOT NULL," +
+                               "z INTEGER NOT NULL," +
+                               "timestamp INTEGER NOT NULL" +
+                               ")";
+        
         try (Statement stmt = connection.createStatement()) {
             stmt.execute(sql);
             stmt.execute(violationsSql);
             stmt.execute(mutesSql);
+            stmt.execute(oreTrackingSql);
         }
     }
     
@@ -87,6 +106,12 @@ public class DatabaseManager {
             
             stmt.executeUpdate();
             report.setId(nextId);
+            
+            // Log the report
+            if (reportLogger != null) {
+                reportLogger.logReport(report);
+            }
+            
             return nextId;
         }
     }
@@ -321,6 +346,69 @@ public class DatabaseManager {
     }
     
 
+    public void logOreMining(UUID playerUUID, String playerName, String oreType, String world, int x, int y, int z, long timestamp) {
+        String sql = "INSERT INTO ore_mining (player_uuid, player_name, ore_type, world, x, y, z, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUUID.toString());
+            stmt.setString(2, playerName);
+            stmt.setString(3, oreType);
+            stmt.setString(4, world);
+            stmt.setInt(5, x);
+            stmt.setInt(6, y);
+            stmt.setInt(7, z);
+            stmt.setLong(8, timestamp);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public java.util.Map<String, Integer> getOreMiningStats(UUID playerUUID, int days) {
+        java.util.Map<String, Integer> stats = new java.util.HashMap<>();
+        long cutoffTime = System.currentTimeMillis() - (days * 24L * 60L * 60L * 1000L);
+        
+        String sql = "SELECT ore_type, COUNT(*) as count FROM ore_mining WHERE player_uuid = ? AND timestamp > ? GROUP BY ore_type ORDER BY count DESC";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUUID.toString());
+            stmt.setLong(2, cutoffTime);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    stats.put(rs.getString("ore_type"), rs.getInt("count"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return stats;
+    }
+    
+    public java.util.Map<String, Integer> getOreMiningByLocation(UUID playerUUID, int days) {
+        java.util.Map<String, Integer> locationStats = new java.util.HashMap<>();
+        long cutoffTime = System.currentTimeMillis() - (days * 24L * 60L * 60L * 1000L);
+        
+        String sql = "SELECT x, y, z, COUNT(*) as count FROM ore_mining WHERE player_uuid = ? AND timestamp > ? GROUP BY x, y, z HAVING count > 1 ORDER BY count DESC LIMIT 10";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, playerUUID.toString());
+            stmt.setLong(2, cutoffTime);
+            
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    String location = rs.getInt("x") + "," + rs.getInt("y") + "," + rs.getInt("z");
+                    locationStats.put(location, rs.getInt("count"));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return locationStats;
+    }
+    
     public void close() {
         if (connection != null) {
             try {
